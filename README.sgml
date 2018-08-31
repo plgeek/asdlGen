@@ -1,0 +1,101 @@
+<!doctype linuxdoc system [   
+<!entity % decls.common system "src/doc/ldoc/common-decls.ldoc">
+  %decls.common;
+]>
+<article>
+<title>README for &asdlGen; version &asdlGen.version;
+<author>&author.danwang;
+<date>&asdlGen.release-date;
+<p>
+This is beta release &asdlGen;. Many of
+the internals have been significantly reworked, and most of the major
+internal interfaces have been documented. There have been also several
+significant changes to various backends, and a different compilation model
+for the generated code.
+
+<p>In the past &asdlGen; assumed the existence of several support libraries
+that it would link with the source code produced by it. This made installing
+&asdlGen; quiet a non-trivial task. In the new model &asdlGen; will by
+default emit all the necessary source code needed to compile the world,
+rather than assuming the existence of &asdlGen; specific libraries. The C
+code still requires <tt>libcii.a</tt> which is included verbatim but not
+built in the current distribution.
+
+<p> There's still work to do, most importantly documenting many of the new
+features and providing some good examples. The old user manual is out of
+date but it's better then nothing. 
+
+<p> Also, &asdlGen; is designed to make inter-language operation easier. It
+may not exploit or produce the most idiomatic code for a given language,
+advice on how to improve the code for a given language will be appreciated. 
+
+<code>
+% ./configure --prefix=<install-prefix>
+% make all
+</code>
+Dumps a SML/NJ heap for asdlGen in <tt>src/sml/</tt>. The install rules will
+change in the future. It currently doesn't produce any stand-alone
+executables.
+
+Major Changes/Features include
+<p>
+<itemize>
+<item> Support for SML97, Haskell98, OCaml-2.0, Java, C++, C, and Icon. 
+<item>
+Reworked command line handling and command line options. &asdlGen;
+<tt>--help</tt> is now much more informative.  
+<item> &asdlGen; can optionally output dependency information for <tt>make</tt>
+or language appropriate build system.
+<item>Reworked pretty printing for all the backends to produce more 
+readable code.  
+<item>Currently dropped support for pickle pretty-printer, it will be
+reincarnated some time in the future.
+<item>Java and C++ backends now use generic/templated arrays 
+to implement sequence and option types.
+
+<item>Experimental support for preservation of sharing and XML.
+<item> SML97, Haskell98, and Ocaml-2.0 supports an "s-expression" ASCII
+picklers. Useful for debugging.
+<item> Ability for users to define there own primitive types.
+<item>New syntax for importing modules
+<code>
+module T (imports VeryLongModuleName alias M) {
+ foo = (M.t)
+}
+</code>
+<item> Better name mangling schemes. 
+<item>Support for user defined primitives. Rather than hard coding
+information about user primitive types into &asdlGen; primitives are now
+extensible. In particular the old primitive types of <tt/int/, <tt/string/,
+<tt/identifier/. Are implemented by pre-appending the following declaration
+to all inputs
+<code>
+primitive module StdPrims {
+ int string identifier
+}
+</code>
+&asdlGen; tacks this on to any set of input files to remain compatible with
+existing code. Users, can add their own primitive types by simply including
+there own primitive module declaration. See 
+<htmlurl url="src/asdl/std-types.asdl" name="src/asdl/std-types.asdl">
+for an example that defines a richer set fix width integer and word types,
+for various languages.
+<item> Support for an unnamed "Toplevel" module. Allowing one to generate less
+verbose code for pedagogical purposes. See
+<htmlurl url="src/asdl/tests/toplevel.asdl" 
+name="src/asdl/tests/toplevel.asdl"> for an example usage.
+</itemize>
+
+<sect>COPYRIGHT<p>
+&asdlGen; is distributed under the following terms.
+&doc.copyright;
+<sect>Installation<p>
+Only a source release is available.
+See <htmlurl url="INSTALL.html" name="INSTALL"> for details. 
+See the <url
+ url="http://www.cs.princeton.edu/zephyr/ASDL/asdlGen-bugs.html" name="master
+ bug list"> for bug hunting details.
+</article>
+
+
+

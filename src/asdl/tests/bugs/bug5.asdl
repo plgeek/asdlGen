@@ -1,0 +1,6 @@
+-- bug 5
+-- Mangling is inconsistent in C code
+-- open
+module bug5 {
+ float	= (int msb,int lsb)
+}

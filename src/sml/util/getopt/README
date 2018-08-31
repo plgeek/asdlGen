@@ -1,0 +1,3 @@
+
+A port of Sven Panne's implementation of the getopt library in Haskell.
+See the signature for details, and the test file for sample use.

@@ -1,0 +1,115 @@
+#!/bin/sh
+#*
+# \section*{[[duntangle]]}
+# Hacked up version of the [[nountangle]] filter that comes with [[noweb]]. 
+# It's been modified to output comments in a style compatible with [[dtangle]].
+# It currently broken an only outputs ML style comments.
+#*
+#::
+#
+# Copyright 1991 by Norman Ramsey.  All rights reserved.
+# See file COPYRIGHT for more information.
+# set -x
+#:setup default vars:
+LIB=/usr/local/noweb/lib
+markup=$LIB/markup opt= arg= filters=
+width=72 subst='gsub("\\*/", "* /", s)' format='/* %%-%ds */'
+##
+#:command line hacking:
+while [ $# -gt 0 ]; do
+	case $1 in
+        -ml|-m3) format='(* %%-%ds *)' ;        
+                 subst='gsub("\\*\\)", "* )", s); gsub("\\(\\*", "( *", s)' ;;
+        -awk|-icn|-icon)    format='# %%-%ds' ; subst=' ' ;;
+	-lisp|-scm)	    format=';;; %%-%ds' ; subst=' ' ;;
+        -c++)    format='// %%-%ds' ;           subst=' ' ;;
+        -c)      format='/* %%-%ds */'          subst='gsub("\\*/", "* /", s)' ;;
+	-pascal) format='{ %%-%ds }' ;          subst='gsub("[{}]", "-", s)' ;;
+        -f77)    format='C %%-%ds' ;            subst=' ' ;;
+        -f90)    format='! %%-%ds' ;            subst=' ' ;;
+        -tex)    format='%%%% %%-%ds' ;         subst=' ' ;;
+        -L*) ;; # deliberately ignore requests for #line
+        -w[0-9][0-9]*)    width=`echo $1 | sed 's/^-w//'` ;;
+	-filter) filters=" | $filters $2 " ; shift ;;
+	-markup) markup="$2" ; shift ;;
+	-)  arg="$arg '$1'" ;;
+        -*) opt="$opt '$1'" ;;
+        *)  arg="$arg '$1'" ;;
+        esac
+	shift
+done
+##
+#*
+# Run [[markup]] and [[nt]] filtering the output of [[markup]] 
+# through [[awk]] which takes a script from the command line.
+#*
+#:run the pipeline:
+PATH="$PATH:$LIB" eval "$markup $arg $filters" |
+#:run awk:
+awk 'BEGIN { order=1; line = 0; capture = 0; 
+             maxcode = 0;
+             format=sprintf("'"$format"'",'"$width"') }
+
+function comment(s) {
+    '"$subst"'
+    return sprintf(format,s)
+}
+function max(x,y) {
+    return (((x+0) > (y+0)) ? x : y)
+}
+
+function grab(s) {
+  if (capture==0) print
+  else holding[line] = holding[line] s
+}
+ 
+/^@file / { file=substr($0,7); print ; next }  
+/^@end doc/ { capture = 0; holding[++line] = "**)" ; 
+                           holding[++line] = ""; next }
+/^@begin doc/ { capture = 1; holding[++line] = "(**";
+                             holding[++line] = ""; next }
+
+/^@text /     { grab(substr($0,7)); next}
+/^@quote$/    { grab("[[") ; next}
+/^@endquote$/ { grab("]]") ; next}
+
+/^@nl$/ { if (capture !=0 ) {
+            holding[++line] = ""
+          } else if (defn_pending != 0) {
+	    print "@nl"
+            for (i=0; i<=line && holding[i] ~ /^ *$/; i++) i=i
+            for (; i<=line; i++) printf "@text %s\n@nl\n", holding[i]
+            line = 0; holding[0] = ""
+            defn_pending = 0
+          } else print
+          next  
+        }
+/^@defn / {  print;
+             holding[line] = holding[line] "(*:"substr($0,7)":*)" ; 
+             map[order++] = substr($0,7) ;
+             defn_pending = 1;
+             next;}
+/^@begin code/ {  maxcode = max( substr($0,13),maxcode); print;  next;}
+/^@end code/ {  print "@text (**)\n@nl"; print; next;}
+#*
+# Code to blast out a code chunck that lists the order of definition 
+# of various all the chuncks as they occurred in the original [[noweb]] file.
+# The name of the code chunck is the same as the [[noweb]] file itself.
+#*
+#:clean up code:#
+END {
+    print "@begin code " maxcode+1;
+    print "@defn " file "\n@nl";
+    for (i=0 ; i<=order; i++) printf "@text %s\n@nl\n", map[i]   
+    print "@end code " maxcode+1;
+}
+##
+{ print }' \ |
+##
+ eval "$LIB/nt $opt"
+##
+
+
+
+
+

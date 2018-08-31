@@ -1,0 +1,23 @@
+module Pattern
+{
+	expr		= Id(identifier id)
+			| Num(int n)
+			| Str(string st)
+
+	action		= (identifier name, expr *params)
+
+	pattern		= (identifier tp, identifier name, patternval? p)
+
+	patternval	= PatternExp(expr e)
+			| PatternList(pattern *p)
+
+	depend		= Act(action a)
+			| Exp(expr e)
+			| DepVar(identifier id, expr value)
+
+	rule		= (value *vl, pattern p, depend *dl)
+
+	value		= (identifier name, expr val)
+
+	start		= (rule *rl, value *ol)
+}

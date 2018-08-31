@@ -1,0 +1,8 @@
+-- bug 3
+-- Check for recursively defined types rejects otherwise vaild ASDL.
+-- Is valid but is rejected by asdlGen.
+-- fixed
+module bug3 {
+	t = A | B(x)
+	x = (int,t)
+}

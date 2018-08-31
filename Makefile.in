@@ -1,0 +1,31 @@
+INSTALL=@INSTALL@
+all: @top_srcdir@/src/c/cii/
+	cd @top_srcdir@/src/sml/; \
+	echo 'CM.make();Build.Config.all();' | @SML_CM@
+
+install: all
+	cd @top_srcdir@/src/sml/; \
+	echo 'CM.make();Build.Config.install();' | @SML_CM@
+
+clean: cii-clean
+	echo 'CM.make();Build.Config.clean();' | @SML_CM@
+	-rm -rf	@top_srcdir@/src/c/cii/
+
+cii-all:
+	cd @top_srcdir@/src/cii/; \
+        $(MAKE) THREADS= EXAMPLES= EXTRAS= BUILDDIR=./ $(CIIARGS) all
+
+cii-install: cii-all install
+	test -d @prefix@/include/cii/ || mkdir  @prefix@/include/cii/
+	test -d @prefix@/lib/cii/ || mkdir @prefix@/lib/cii/
+	@INSTALL_DATA@ @top_srcdir@/src/cii/include/*.h @prefix@/include/cii/
+	@INSTALL_DATA@ @top_srcdir@/src/cii/libcii.a @prefix@/lib/cii/
+
+cii-clean:
+	cd @top_srcdir@/src/cii/; \
+        $(MAKE) THREADS= EXAMPLES= EXTRAS= BUILDDIR=./ $(CIIARGS) clean
+
+# includes for local build this is a hack.
+@top_srcdir@/src/c/cii/: 
+	test -d @top_srcdir@/src/c/cii/ || mkdir @top_srcdir@/src/c/cii/
+	@INSTALL_DATA@ @top_srcdir@/src/cii/include/*.h @top_srcdir@/src/c/cii/

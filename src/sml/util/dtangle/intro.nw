@@ -1,0 +1,84 @@
+\section*{Introduction}
+Literate programming encourages a discipline of writing well documented
+code that can be understood by both the computer and programmer. Having well
+documented code encourages code reuse and reduce the cost of software
+maintenance. Having documented source that can be understood by someone
+other than the primary developer allows for collaborative development and
+improvement of software.
+
+Unfortunately, literate programming in the form of systems like Knuth's
+[[web]] or Ramsey's [[noweb]] have not taken the world by storm. However,
+literate programming in the form of systems like [[javadoc]] and Perl's
+[[POD]] are arguably more successful. The differences between these two
+types of systems is that the former systems derive code from documentation
+while the latter derive documentation from the code. This subtle differences
+has a number of consequences.
+
+In systems like [[javadoc]] and Perl's [[POD]] where documentation is
+derived from comments embedded in the source code all the normal build and
+compile tools work normally without any modification or extra pre-processing
+steps. To produce documentation one has to go through a few extra
+steps. Systems like [[web]] and [[noweb]] require developers to add an extra
+pre-processing step to compile source code. If we believe that most of the
+time programmers are modifying source code rather than documentation, it
+would seem that a system that did not require an extra pre-processing step
+would be better.
+
+What's more [[javadoc]] and [[POD]] like systems have the advantage that
+developers do not have to install special tools in order to modify source
+code and can submit patches to the code that can easily be incorporated into
+the main distribution. If a source file is derived from some other file and
+developers who do not have special tools submit patches to the derived
+source files incorporating those patches can be quite complex.
+
+Starting with a complete program also solves many nasty technical problems
+found in [[web]] and [[noweb]]. In particular indexing and pretty printing
+are hard problems in these systems because programs are divided into small
+``chunks'' of code which by themselves may not correspond to a valid or
+complete program by itself. It is much easier to fragment the
+documentation and keep the code intact.
+
+Unfortunately systems like [[javadoc]] and [[POD]] are language dependent,
+and in many ways are not as powerful as tools and systems such as
+[[noweb]]. Both [[javadoc]] and [[POD]] support very limited formatting
+languages for documentation, while like [[noweb]] provide access to powerful
+formatting languages such as \TeX\ and \LaTeX.  Systems like [[javadoc]] and
+[[POD]] have the advantage of deriving everything form the the code but lack
+a powerful formatting language or the right document model and language
+independence that [[noweb]] has. In an attempt to get the best of both
+worlds I've attempted to build a system by building a language independent
+parser that parses comments for a wide variety of programming languages and
+produce as output a [[noweb]] file. This approach allows the reuse of the
+existing [[noweb]] infrastructure while reducing the hassles of deriving
+source files from documentation. I call the approach of producing a
+[[noweb]] file from comments in a source file ``dtangling''.
+
+This document was produced from dtangling a prototype implementation of such
+a tool written in Standard ML. Ideally, this approach could be used in the
+normal [[noweb]] distribution by replacing the [[markup]] processor with a
+tool that understood embedded documentation comments.
+
+\section*{The [[dtangle]] Document Model}
+The model of a [[dtangle]] document is pretty straight forward. It consist
+of a tree of nodes. Each node contains some lines of code and optionally a
+documentation chunk. Nodes can be nested arbitrarily. Each node corresponds
+to a documentation chunk followed by a code definition in a [[noweb]]
+file. This idea is based on the output of the [[nountangle]] tool.  The
+conversion of a [[dtangle]] document into a [[noweb]] format is simply a
+matter of choosing a flatten representation of the tree. A straight forward
+pre-order traversal of the tree which replaces nested nodes with uses to the
+code chunk presents the tree in a top-down fashion. In future there will be
+support to let users have more control of the document structure.
+
+The rest of this document is the implementation itself which includes the
+nitty gritty details, and provides a good example of using [[dtangle]]. 
+The [[dtangle]] approach seems like a great way to migrate an existing code
+base into the literate programming model. Also include is a hacked up
+version of [[nountangle]] that converts existing [[noweb]] files into
+[[dtangle]] format. It's currently broken and only useful from ML code, but
+it's a start.
+
+
+
+
+

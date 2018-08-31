@@ -1,0 +1,26 @@
+module Slp3 {
+
+-- Straight Line Programs from MC
+-- With user defined field names
+-- With sequence
+-- With raw products, atributes and options
+
+pos = (string? file,int line, int offset)
+
+stm = Compound(stm head,stm next)
+    | Assign(identifier id,exp exp) 
+    | Print(exp*)
+     attributes (pos p,int? value)
+
+-- Values are optional so that a parser can ignore them
+-- but an evaluator can use them to record the value of each
+-- sub-expression
+
+exp = Id(identifier id)
+    | Num(int v)
+    | Op(exp lexp,binop,exp rexp)
+     attributes (pos p,int? value)	
+
+binop = Plus | Minus | Times | Div
+
+}

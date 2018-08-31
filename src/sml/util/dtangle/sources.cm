@@ -1,0 +1,11 @@
+(**
+CM file for compiling everything.
+**)
+(*::*)
+Group is
+smlnj-lib.cm
+dtangle-lexer.sml
+dtangle.sml
+build-dtangle.sml
+../meta-build/sources.cm    
+

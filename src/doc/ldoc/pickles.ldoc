@@ -1,0 +1,123 @@
+<label id="sect.pickles"><p>
+One of the most important features of &asdlGen; is that it automatically
+produces functions that can read and write the data structures it generates
+to and from a platform and language independent external
+representation. This process of converting data structures in memory into a
+sequence of bytes on the disk is referred to as pickling. Since from a
+single ASDL specification &asdlGen; produces both data structures and
+pickling code for &asdlGen.supported-languages;, &asdlGen; provides an easy
+and efficient way to share complex data structures among these languages.
+
+<sect1>User Visible Interface<p>
+As part of the output code every defined type has a <tt/read/ and <tt/write/
+function that writes values of that type to or from a stream. There are also
+<tt/read_tagged/ and <tt/write_tagged/ functions that first output a unique
+tag before writing out the rest of the type. These functions are useful when
+you expect to write several different kinds of pickles to the same stream
+and want a minimal level of error checking. 
+
+The ASDL pickle format requires that both the reader and writer
+of the pickler agree on the type of the pickle. Other than constructor tags
+for sum types, there is no explicit type information in the pickle. In the
+case of an error the behavior is undefined. It is also important for the
+streams to be opened in binary mode to prevent line feed translations from
+corrupting the pickle. 
+
+<em>Plans are being made to support a text based pickle format similar to
+XML/SGML</em>
+
+<sect1>Pretty Printing Pickles<p>
+<tscreen>
+asdlGen --pp_pkl [ --text | (--html [--lists|--tables]) ] <em/file.typ/ <em/file.pkl/
+<em/type-id/ ...
+</tscreen>
+
+&asdlGen; has an option that will dump pickles into either a simple
+textual format or HTML. In order to display a pickle &asdlGen; needs
+to have a description of the type environment and the name of the type
+in the pickle. A description of the type environment, which produced
+the pickle, is obtained by running &asdlGen; with the <tt/--typ/ option
+on the set of files that describe the modules that produced the code
+which produced the pickle. The resulting <tt/env.typ/ should be the
+first file provided to &asdlGen; after the <tt/--pp_pkl/
+argument. The <tt/--output_file/> option can be use to change the name
+of the resulting type environment. The file that contains the pickle
+comes next, and finally a list of fully qualified type identifiers
+that describe the pickles in the file.
+
+<em/Produce a type environment/
+<tscreen>
+% asdlGen --typ slp.asdl --output_file=slp.typ
+</tscreen>
+<em/Produce a pickle file called/ <tt/slp.pkl/ <em/that contains/ <tt/Slp.exp/ 
+<em/and/ <tt/Slp.stm/ 
+<tscreen>
+% asdlGen --pp_pkl slp.typ slp.pkl Slp.exp Slp.stm <newline>
+</tscreen>
+
+<sect1>Pickle Format Details<p> The format of the data is described in
+detail below for description writers that use the <tt/reader/ and
+<tt/writer/ properties to replace the default pickling code for whatever
+reason.
+
+Since ASDL data structures have a tree-like form, they can be represented
+linearly with a simple prefix encoding. It is easy to generate functions
+that convert to and from the linear form.  A pre-order walk of the data
+structure is all that's needed. The walk is implemented as recursively
+defined functions for each type in an ASDL definition. Each function visits
+a node of that type and recursively walks the rest of the tree. Functions
+that write a value take as their first argument the value to write. The
+second argument is the stream that is to be written to. Functions that read
+values take the stream they are to read the value from as their single
+argument and return the value read. 
+
+<descrip>
+<tag/int/
+
+Since ASDL integers are intended to be of infinite precision they are
+represented with a variable-length, signed-magnitude encoding.  The
+eight bit of each byte indicates if a given byte is the last byte of
+the integer encoding. The seventh bit of the most significant byte is
+used to determine the sign of the value. Numbers in the range of -63
+to 63 can be encoded in one byte. Numbers out of this range require an
+extra byte for every seven bits of precision needed.  Bytes are
+written out in little-endian order. If most integer values tend to be
+values near zero, this encoding of integers may use less space than a
+fixed precision representation.
+
+<tag/string/
+Strings are represented with a length-header that describe how many more
+8-bit bytes follow for the string and then the data for the string in
+bytes. The length-header is encoded with the same arbitrary precision
+integer encoding described previously.
+
+<tag/identifier/
+Identifiers are represented as if they were strings. 
+
+<tag/product types/ 
+Product types are represented sequentially without any tag. The fields of
+the product type are packed from left to right.
+
+<tag/sum types/ Sum types begin with a unique tag to identify the constructor
+followed sequentially by the fields of the constructor.  Tag values are
+assigned based on the order of constructor definition in the
+description. The first constructor has a tag value of one. Fields are packed
+left to right based of the order in the definition.  If there are any
+attribute values associated with the type, they are packed left to right
+after the tag but before other constructor fields. The tag is encoded with
+the same arbitrary precision integer encoding described previously.
+
+<tag/sequence qualified types/
+Sequence types are represented with an integer length-header followed by
+that many values of that type. The length-header is encoded with the same
+arbitrary precision integer encoding described previously.
+
+<tag/option qualified types/
+Optional values are preceded by an integer header that is either one or
+zero. A zero indicates that the value is empty (NONE, nil, or NULL) and no
+more data follows. A one indicates that the next value is the value of the
+optional value. The header is encoded with the same arbitrary precision
+integer encoding described previously.
+</descrip>
+
+

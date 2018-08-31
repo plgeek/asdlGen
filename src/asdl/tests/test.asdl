@@ -1,0 +1,25 @@
+-- ASDL specicication in ASDL without use of labels
+-- * = repetition ? = optional ala. grep
+-- Think grep meets Cish prototypes
+
+module Asdl {
+
+  asdl_type = SumType(identifier, field*,constructor, constructor*)
+            | ProductType(identifier,field?,field*)
+
+  constructor = Con(identifier, field*)
+
+  field = Id | Option | Sequence 
+  attributes (identifier,identifier?)
+
+  op = Plus | Minus | Times | Div
+  t = (op bar,op* baz,op?)
+  foo = (bar)
+  bar = (foo)
+}
+
+
+
+
+
+

@@ -1,0 +1,252 @@
+<!doctype linuxdoc system [   
+<!entity % decls.common system "src/doc/ldoc/common-decls.ldoc">
+  %decls.common;
+]>
+<article>
+<title>CHANGES
+<author>&author.danwang;
+<date> &asdlGen.release-date;
+<sect>CHANGES in 2.0 beta Release<p>
+See the 2.0 README
+<sect>CHANGES in 1.3 alpha Release<p>
+Lots. Full list when the final version comes out.
+<sect>CHANGES in 1.2 Release<p>
+<sect1>Bugs Fixed<p>
+<itemize>
+<item> Bug in Java code that would cause pickler to go into
+infinite loop.
+<item> Bug in Java code handling of StdTypes.bool.
+<item> Fixed code so asdlGen does not silently fail on errors.
+</itemize>
+<sect1>Incompatible Changes<p>
+<itemize>
+<item>Command line syntax has changed. See the Reference manual for details.
+</itemize>
+<sect1>New Features<p>
+<itemize>
+<item><tt/--simple_lists=false/ flag for Java and C++ to control how
+sequences are handled.
+<item>Java code now uses fully qualified identifiers everywhere. This solves
+many name conflicts at the cost of some uglier looking code.
+<item>Tree walkers generated for all the nodes defined in a module for C++
+and Java via the <tt/--walker_code=true/ option.
+<item>Deep and shallow copy methods 
+generated for all the nodes defined in a module for C++
+and Java via the <tt/--copy_code=true/ option.
+<item>HTML dump of pickles now uses nested HTML tables to get the old
+behavior see the Reference manual.
+</itemize>
+<sect1>Known Bugs<p>
+<itemize>
+<item> Handling of optional types in StdTypes module not implemented in all
+languages. 
+<item>Deep copy methods produced for sequence types not actually 
+preforming a deep copy. 
+</itemize>
+
+<sect>CHANGES in 1.10 Release<p>
+<sect1>Incompatible Changes<p>
+<itemize>
+<item>C code now use libcii by default. To get more of the old behavior try
+the flags <tt/--mono_types true/ and <tt/--include_base asdl_base.h/. 
+See src/c/asdl_base.h and src/c/asdl_base.c.
+<item>C code now generates constant pointers to statically allocated enums
+rather than using enums themselves, for non carrying value constructors.
+<item>Removed the Mod.import.{h,hxx} headers from the installed base, to
+remove perl dependencies.
+</itemize>
+<sect1>New Features<p>
+<itemize>
+<item>src/asdl/std-types.asdl
+<item>View option to completely suppress the generation of code on a per-module
+level. View option for generating library code that produces list and option
+types for every type in the module not just types that are used as lists and
+options. See src/asdl/std-types.asdl for examples.
+<item>Vistor patterns for Java and C++.
+<item>Mangled variables to avoid name clashes.
+<item>See  lib/asdlGen/sml for precompiled support code for sml.
+</itemize>
+<sect1>Known Bugs
+<p>Handling of optional types in StdTypes module not implemented in all
+languages. 
+
+<sect>CHANGES in 1.0 Release<p>
+<sect1>Bugs Fixed<p>
+Added <tt/source_name/ option to help with name collisions.
+<sect1>Incompatible Changes<p>
+<itemize>
+<item>Renamed the view properties <tt/user_reader/ and <tt/user_writer/ to
+<tt/reader/ and <tt/writter/.
+<item>Changed the interface to Java and C++ picklers to not include the type
+name in the pickler functions.
+</itemize>
+<sect1>New Features<p>
+See the Reference Manual For Details
+<itemize>
+<item>New View Syntax
+<item>Support of user types in Java and C++
+<item>Integrated Haskell Support thanks to 
+<url url="http://www.dcs.gla.ac.uk/~reig/" name="Fermin Reig Galilea">
+<item><tt/doc_string/ view property now dumps description in HTML output
+</itemize>
+
+
+<sect>CHANGES in 0.92a Release<p>
+<sect1>Bugs Fixed<p>
+Fixed serious bug in pickle code for C
+<sect>CHANGES in 0.91a Release<p>
+<sect1>Bugs Fixed<p>
+For bug fixes and current open bugs see
+<htmlurl url="http://www.cs.princeton.edu/zephyr/ASDL/asdlGen-bugs.html" name="">
+http://www.cs.princeton.edu/zephyr/ASDL/asdlGen-bugs.html
+<sect1>Incompatible Changes
+<p>
+Changed the representation of int&lowbar;option&lowbar;ty in asdl&lowbar;base to be a
+unboxed int. The NONE value is now INT&lowbar;MIN as defined by limits.h. 
+<sect1>New Features
+<p>
+<itemize>
+<item> Support for writting and reading pickled values preceded by a unique
+     type tag. (Currently SML and C only)
+
+<item> Introduction of <htmlurl url="src/doc/views.html" name="src/doc/views.html"> to
+provide more user control over code. 
+
+<item> The beginnings of support for David Hanson's 
+<htmlurl url="http://www.cs.princeton.edu/software/cii/" name="libcii">.
+See the <bf>untested</bf> code for libcii support in
+<htmlurl url="src/c/cii&lowbar;base.h" name="src/c/cii&lowbar;base.h">
+<htmlurl url="src/c/cii&lowbar;base.c" name="src/c/cii&lowbar;base.c">. You need to
+invoke asdlGen with the following options to try the libcii code out
+<tscreen><verb>
+  asdlGen --c --base_include base_cii.h --mono_types false T.asdl
+</verb></tscreen>
+
+<item>Added generic pickle pretty printer.
+Given an an ASDL defintion such as
+<tscreen><verb>
+module T {
+  t = ....
+}
+</verb></tscreen>
+Calling
+<tscreen><verb>
+  asdlGen --typ ./T.asdl
+</verb></tscreen>
+will produces a type environment called T.asdl.typ
+If we have a pickle t.pkl generated by the picklers from that 
+same type environment, that contains a single type T.t
+<tscreen><verb>
+ asdlGen --pp_pkl T.asdl.typ t.pkl T.t
+</verb></tscreen>
+will produce and HTML dump of the pickle. 
+<tscreen><verb>
+ asdlGen --pp_pkl --text T.asdl.typ T.t
+</verb></tscreen>
+will produce a plain text dump of the pickle.
+<item>Added options to control inclusion of the base environment. i.e.
+  <itemize> 
+  <item>--base&lowbar;include (C,C++)
+  <item>--base&lowbar;import  (Java)
+  <item>--base&lowbar;signature (ML)
+  <item>--base&lowbar;structure (ML)
+  </itemize>
+
+<item>Added --mono&lowbar;types option. The mono&lowbar;type option controls whether C code
+generated will create a new type for every list or option type or use one
+uniform type. Rather than creating a new list type for each different type
+of list. See <htmlurl url="src/c/cii&lowbar;base.h" name="src/c/cii&lowbar;base.h"> for an
+example of the required functions to provided this interface. By default
+this flag is set to true.
+
+For details compare the output of
+<tscreen><verb>
+  asdlGen --c --mono_types false src/asdl/slp3.asdl
+</verb></tscreen>
+and 
+<tscreen><verb>
+  asdlGen --c --mono_types true src/asdl/slp3.asdl
+</verb></tscreen>
+<item>Added option views to override the default view
+<tscreen><verb>
+  asdlGen --lang --view view_name
+</verb></tscreen>
+<item>Allow C,C++, and Java to choose enum value via enum&lowbar;value 
+ property
+<tscreen><verb>
+view C {
+	Slp.Id <= enum_value: 1
+}
+</verb></tscreen>
+<item>Added properties to add user code verbatim in  code. Not
+supported in all languages yet.
+  <itemize>
+  <item> interface&lowbar;prologue
+  <item> interface&lowbar;epilogue
+  <item> implementation&lowbar;prologue
+  <item> implementation&lowbar;epilogue
+  </itemize>
+<tscreen><verb>
+view C {
+
+  module Slp <= interface_prologue
+%%
+#include "mytypes.h"
+%%
+
+}
+</verb></tscreen>
+
+<item>Added support for user types in C and ML via
+<tscreen><verb>
+view SML {
+-- make exp a mutable value
+  Slp.exp <= natural_type_con :ref
+  Slp.exp <= unwrapper        :ref
+  Slp.exp <= wrapper          :!
+}
+</verb></tscreen>
+<tscreen><verb>
+view C {
+  Slp.pos <= natural_type     :int
+  Slp.pos <= unwrapper        :pos2int
+  Slp.pos <= wrapper          :int2pos
+}
+</verb></tscreen>
+<descrip>
+<tag>natural&lowbar;type
+</tag>A qualified identifier that describes the type to use in place of the
+default ASDL type. 
+
+<tag>natural&lowbar;type&lowbar;con
+</tag>A qualified identifier that names a type constructor that 
+describes the type to use in place of the ASDL type.
+
+<tag>wrapper
+</tag>A qualified identifier that names a function that converts from the
+default ASDL type to a special type used in its place.
+
+<tag>unwrapper
+</tag>A qualified identifier that names a function that converts from a
+special in-core type to the default ASDL type.
+</descrip>
+<item>Added support for user picklers 
+<tscreen><verb>
+view C {
+    Slp.exp <= user_reader : my_reader_id
+    Slp.exp <= user_writer : my_writer_id
+}
+</verb></tscreen>
+<item>Added user&lowbar;attribute support for C
+<tscreen><verb>
+view C {
+  Slp.exp <= user_attribute : my_user_type_id
+}
+</verb></tscreen>
+Adds an extra field to the exp called client&lowbar;data of 
+type my&lowbar;user&lowbar;type&lowbar;id. This field is completely ignored by the
+picklers and constructor functions. A user defined wrapper functions can be
+used to initialize it when pickling or unpickling a value. See the
+discussion or wrapper and unwrapper above.
+</itemize>
+</article>

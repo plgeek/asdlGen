@@ -1,0 +1,33 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/c/std_prims.c)
+AC_CONFIG_AUX_DIR(src/misc)
+AC_CONFIG_SUBDIRS(src/sml/util/meta-build)
+
+dnl Checks for programs.
+AC_PROG_INSTALL
+AC_CHECK_PROGS(SML_CM,sml-cm sml-cm.bat,
+	AC_MSG_ERROR("Can't find installed sml-cm on PATH"))
+
+dnl how to run an sml heap
+eval `/bin/sh src/misc/sysname`
+AC_CHECK_PROGS(RUN_SML_HEAP,sml sml-cm sml-cm.bat)
+
+case "${RUN_SML_HEAP}" in
+	sml-cm.bat) 
+        RUN_SML_HEAP=`/bin/sh src/misc/find_runtime.sh`
+        ;;
+esac
+ASDLGEN_VERSION=2.0-beta
+ASDLGEN_HEAP='${top_srcdir}/src/sml/asdlGen.${HEAP_SUFFIX}'
+AC_SUBST(ASDLGEN_VERSION)
+AC_SUBST(ASDLGEN_HEAP)
+AC_SUBST(HEAP_SUFFIX)
+
+dnl Write out the files
+AC_OUTPUT(Makefile
+	  src/sml/config.sml
+          src/misc/sml-batch,
+dnl Set the bits on the shell scripts
+[ chmod 755 src/misc/sml-batch ]
+)
+

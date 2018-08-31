@@ -1,0 +1,198 @@
+  README for asdlGen version 2.0-beta
+  Daniel C. Wang
+  February 14, 2000
+
+  This is beta release asdlGen. Many of the internals have been
+  significantly reworked, and most of the major internal interfaces have
+  been documented. There have been also several significant changes to
+  various backends, and a different compilation model for the generated
+  code.
+
+
+  In the past asdlGen assumed the existence of several support libraries
+  that it would link with the source code produced by it. This made
+  installing asdlGen quiet a non-trivial task. In the new model asdlGen
+  will by default emit all the necessary source code needed to compile
+  the world, rather than assuming the existence of asdlGen specific
+  libraries. The C code still requires libcii.a which is included
+  verbatim but not built in the current distribution.
+
+
+  There's still work to do, most importantly documenting many of the new
+  features and providing some good examples. The old user manual is out
+  of date but it's better then nothing.
+
+
+  Also, asdlGen is designed to make inter-language operation easier. It
+  may not exploit or produce the most idiomatic code for a given
+  language, advice on how to improve the code for a given language will
+  be appreciated.
+
+
+  ______________________________________________________________________
+  % ./configure --prefix=<install-prefix>
+  % make all
+  ______________________________________________________________________
+
+
+  Dumps a SML/NJ heap for asdlGen in src/sml/. The install rules will
+  change in the future. It currently doesn't produce any stand-alone
+  executables.
+
+  Major Changes/Features include
+
+
+  o  Support for SML97, Haskell98, OCaml-2.0, Java, C++, C, and Icon.
+
+  o  Reworked command line handling and command line options. asdlGen
+     --help is now much more informative.
+
+  o  asdlGen can optionally output dependency information for make or
+     language appropriate build system.
+
+  o  Reworked pretty printing for all the backends to produce more
+     readable code.
+
+  o  Currently dropped support for pickle pretty-printer, it will be
+     reincarnated some time in the future.
+
+  o  Java and C++ backends now use generic/templated arrays to implement
+     sequence and option types.
+
+  o  Experimental support for preservation of sharing and XML.
+
+  o  SML97, Haskell98, and Ocaml-2.0 supports an "s-expression" ASCII
+     picklers. Useful for debugging.
+
+  o  Ability for users to define there own primitive types.
+
+  o  New syntax for importing modules
+
+     ___________________________________________________________________
+     module T (imports VeryLongModuleName alias M) {
+      foo = (M.t)
+     }
+     ___________________________________________________________________
+
+
+
+  o  Better name mangling schemes.
+
+  o  Support for user defined primitives. Rather than hard coding
+     information about user primitive types into asdlGen primitives are
+     now extensible. In particular the old primitive types of int,
+     string, identifier. Are implemented by pre-appending the following
+     declaration to all inputs
+
+     ___________________________________________________________________
+     primitive module StdPrims {
+      int string identifier
+     }
+     ___________________________________________________________________
+
+
+  asdlGen tacks this on to any set of input files to remain compatible
+  with existing code. Users, can add their own primitive types by simply
+  including there own primitive module declaration. See src/asdl/std-
+  types.asdl for an example that defines a richer set fix width integer
+  and word types, for various languages.
+
+  o  Support for an unnamed "Toplevel" module. Allowing one to generate
+     less verbose code for pedagogical purposes. See
+     src/asdl/tests/toplevel.asdl for an example usage.
+
+
+  1.  COPYRIGHT
+
+  asdlGen is distributed under the following terms.
+
+
+
+  Copyright Notice, License and Disclaimer.
+
+  Copyright 1998 - 2000 by Princeton University
+
+  Permission to use, copy, modify, and distribute this software and its
+  documentation for any purpose and without fee is hereby granted,
+  provided that the above copyright notice appear in all copies and that
+  both the copyright notice and this permission notice and warranty
+  disclaimer appear in supporting documentation, and that the name of
+  Princeton University not be used in advertising or publicity
+  pertaining to distribution of the software without specific, written
+  prior permission.
+
+  Princeton University disclaims all warranties with regard to this
+  software, including all implied warranties of merchantability and
+  fitness.  In no event shall Princeton University be liable for any
+  special, indirect or consequential damages or any damages whatsoever
+  resulting from loss of use, data or profits, whether in an action of
+  contract, negligence or other tortious action, arising out of or in
+  connection with the use or performance of this software.
+
+
+  2.  Installation
+
+  Only a source release is available.  See INSTALL for details.  See the
+  master  bug list <http://www.cs.princeton.edu/zephyr/ASDL/asdlGen-
+  bugs.html> for bug hunting details.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,26 @@
+module Stm (imports Pos alias P
+            imports Exp) {
+
+stm = Compound(stm head,stm next)
+    | Assign(identifier id,Exp.exp exp) 
+    | Print(Exp.exp*)
+     attributes (P.pos p,int? value)
+}
+
+module Exp (imports Pos alias P
+            imports Ops alias O)  {
+
+exp = Id(identifier id)
+    | Num(int v)
+    | Op(exp lexp, O.binop? op, exp rexp)
+     attributes (P.pos p,int? value)	
+
+}
+
+module Pos {
+pos = (string? file,int line, int offset)
+}
+
+module Ops {
+	binop = Plus | Minus | Times | Div	
+}

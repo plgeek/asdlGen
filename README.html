@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>README for asdlGen version 2.0-beta</TITLE>
+
+
+</HEAD>
+<BODY>
+<H1>README for <CODE>asdlGen</CODE> version 2.0-beta</H1>
+
+<H2>Daniel C. Wang</H2>February 14, 2000<P>This is beta release <CODE>asdlGen</CODE>. Many of
+the internals have been significantly reworked, and most of the major
+internal interfaces have been documented. There have been also several
+significant changes to various backends, and a different compilation model
+for the generated code.
+<P>
+<P>In the past <CODE>asdlGen</CODE> assumed the existence of several support libraries
+that it would link with the source code produced by it. This made installing
+<CODE>asdlGen</CODE> quiet a non-trivial task. In the new model <CODE>asdlGen</CODE> will by
+default emit all the necessary source code needed to compile the world,
+rather than assuming the existence of <CODE>asdlGen</CODE> specific libraries. The C
+code still requires <CODE>libcii.a</CODE> which is included verbatim but not
+built in the current distribution.
+<P>
+<P> There's still work to do, most importantly documenting many of the new
+features and providing some good examples. The old user manual is out of
+date but it's better then nothing. 
+<P>
+<P> Also, <CODE>asdlGen</CODE> is designed to make inter-language operation easier. It
+may not exploit or produce the most idiomatic code for a given language,
+advice on how to improve the code for a given language will be appreciated. 
+<P>
+<HR>
+<PRE>
+% ./configure --prefix=&lt;install-prefix>
+% make all
+</PRE>
+<HR>
+
+Dumps a SML/NJ heap for asdlGen in <CODE>src/sml/</CODE>. The install rules will
+change in the future. It currently doesn't produce any stand-alone
+executables.
+<P>Major Changes/Features include
+<P>
+<UL>
+<LI> Support for SML97, Haskell98, OCaml-2.0, Java, C++, C, and Icon. </LI>
+<LI>Reworked command line handling and command line options. <CODE>asdlGen</CODE>
+<CODE>--help</CODE> is now much more informative.  </LI>
+<LI> <CODE>asdlGen</CODE> can optionally output dependency information for <CODE>make</CODE>
+or language appropriate build system.</LI>
+<LI>Reworked pretty printing for all the backends to produce more 
+readable code.  </LI>
+<LI>Currently dropped support for pickle pretty-printer, it will be
+reincarnated some time in the future.</LI>
+<LI>Java and C++ backends now use generic/templated arrays 
+to implement sequence and option types.
+</LI>
+<LI>Experimental support for preservation of sharing and XML.</LI>
+<LI> SML97, Haskell98, and Ocaml-2.0 supports an "s-expression" ASCII
+picklers. Useful for debugging.</LI>
+<LI> Ability for users to define there own primitive types.</LI>
+<LI>New syntax for importing modules
+<HR>
+<PRE>
+module T (imports VeryLongModuleName alias M) {
+ foo = (M.t)
+}
+</PRE>
+<HR>
+</LI>
+<LI> Better name mangling schemes. </LI>
+<LI>Support for user defined primitives. Rather than hard coding
+information about user primitive types into <CODE>asdlGen</CODE> primitives are now
+extensible. In particular the old primitive types of <CODE>int</CODE>, <CODE>string</CODE>,
+<CODE>identifier</CODE>. Are implemented by pre-appending the following declaration
+to all inputs
+<HR>
+<PRE>
+primitive module StdPrims {
+ int string identifier
+}
+</PRE>
+<HR>
+
+<CODE>asdlGen</CODE> tacks this on to any set of input files to remain compatible with
+existing code. Users, can add their own primitive types by simply including
+there own primitive module declaration. See 
+<A HREF="src/asdl/std-types.asdl">src/asdl/std-types.asdl</A>
+for an example that defines a richer set fix width integer and word types,
+for various languages.</LI>
+<LI> Support for an unnamed "Toplevel" module. Allowing one to generate less
+verbose code for pedagogical purposes. See
+<A HREF="src/asdl/tests/toplevel.asdl">src/asdl/tests/toplevel.asdl</A> for an example usage.</LI>
+</UL>
+<P>
+<H2><A NAME="s1">1. COPYRIGHT</A></H2>
+
+<P><CODE>asdlGen</CODE> is distributed under the following terms.
+<A NAME="doc.copyright"></A> <P> 
+<P><B>Copyright Notice, License and Disclaimer.</B>
+<P>Copyright 1998 - 2000 by Princeton University
+<P>Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both the copyright notice and this permission notice and warranty
+disclaimer appear in supporting documentation, and that the name of
+Princeton University not be used in advertising or publicity
+pertaining to distribution of the software without specific, written
+prior permission.
+<P>Princeton University disclaims all warranties with regard to this
+software, including all implied warranties of merchantability and
+fitness.  In no event shall Princeton University be liable for any
+special, indirect or consequential damages or any damages whatsoever
+resulting from loss of use, data or profits, whether in an action of
+contract, negligence or other tortious action, arising out of or in
+connection with the use or performance of this software.
+<H2><A NAME="s2">2. Installation</A></H2>
+
+<P>Only a source release is available.
+See 
+<A HREF="INSTALL.html">INSTALL</A> for details. 
+See the 
+<A HREF="http://www.cs.princeton.edu/zephyr/ASDL/asdlGen-bugs.html">master  bug list</A> for bug hunting details.
+</BODY>
+</HTML>

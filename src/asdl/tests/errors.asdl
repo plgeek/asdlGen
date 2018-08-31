@@ -1,0 +1,11 @@
+module Foo {
+
+t = A | B (x)
+y = (t,int)
+x = (y,t)
+
+}
+
+
+
+

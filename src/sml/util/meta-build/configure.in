@@ -1,0 +1,23 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(meta-build.sig)
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_CHECK_PROGS(JAVAC,javac)
+AC_CHECK_PROGS(SML_CM,sml-cm sml-cm.bat)
+AC_CHECK_PROGS(RUN_SML_HEAP,sml sml-cm sml-cm.bat)
+AC_CHECK_PROGS(MKLIB,ar)
+AC_CHECK_PROGS(LINKER,ld)
+dnl Figure out how to build a zip archive 
+AC_CHECK_PROGS(ZIP_PRG, zip pkzip pax)
+case "${ZIP_PRG}" in
+        zip | pkzip) ZIP_FLAGS="-q -0 -r"   ;;
+	pax)         ZIP_FLAGS="-w -x zip -f" ;;
+esac
+AC_SUBST(ZIP_FLAGS)
+dnl Checks for libraries.
+
+JAVA_CLASSDIR='${prefix}/share/classes/'
+dnl Write out the files
+AC_OUTPUT(config-build.sml)
+

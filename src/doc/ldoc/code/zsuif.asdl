@@ -1,0 +1,208 @@
+module ZSUIF {
+
+-- start tokens
+start = (program)
+program = (base_symtab*)
+
+-- These types are aren't handled in the nicest way
+unsigned = (int)
+real = (int,int)
+func_type_ptr_z = (int)
+boolean = TRUE | FALSE
+file_set_entry = (int)
+base_symtab_ptr_z = (int)
+block_symtab_ptr_z = (base_symtab_ptr_z)
+proc_symtab_ptr_z = (block_symtab_ptr_z)
+type_node_ptr_z = (base_symtab_ptr_z, int)
+sym_node_ptr_z = (base_symtab_ptr_z, int)
+var_sym_ptr_z = (sym_node_ptr_z)
+label_sym_ptr_z = (sym_node_ptr_z)
+proc_sym_ptr_z = (sym_node_ptr_z)
+
+-- enum types
+
+-- 44 abstract instructions
+if_ops = IO_eos | IO_mrk | IO_data | IO_cpy | IO_nop | IO_add | IO_sub
+       | IO_neg | IO_mul | IO_div  | IO_rem | IO_mod | IO_min | IO_max
+       | IO_not | IO_and | IO_ior  | IO_xor | IO_abs | IO_asr | IO_lsl
+       | IO_lsr | IO_rot | IO_cvt  | IO_ldc | IO_lod | IO_str | IO_seq
+       | IO_sne | IO_sl  | IO_sle  | IO_btrue | IO_bfalse | IO_jmp
+       | IO_cal | IO_ret | IO_lab  | IO_array | IO_mbr | IO_divfloor
+       | IO_divceil | IO_memcpy | IO_gen | IO_last
+
+type_ops = TYPE_INT | TYPE_FLOAT | TYPE_VOID 
+         | TYPE_PTR 
+         | TYPE_ARRAY
+         | TYPE_FUNC 
+         | TYPE_GROUP | TYPE_STRUCT | TYPE_UNION
+         | TYPE_ENUM
+         | TYPE_CONST 
+         | TYPE_VOLATILE
+         | TYPE_CALL_BY_REF
+         | TYPE_NULL
+
+src_lang_type = Src_unknown | Src_c | Src_fortran | Src_verilog
+
+tree_for_test = FOR_EQ | FOR_NEQ
+              | FOR_SGELE | FOR_SGT | FOR_SGTE | FOR_SLT | FOR_SLTE 
+              | FOR_UGELE | FOR_UGT | FOR_UGTE | FOR_ULT | FOR_ULTE
+
+
+-- other non-derived types
+
+zvar_def = (int align, 
+            var_sym_ptr_z var, 
+            base_symtab_ptr_z table)
+
+immed = Im_int(int)
+      | Im_extended_int(int)
+      | Im_string(string)
+      | Im_float(real)
+      | Im_extended_float(real)
+      | Im_symbol(sym_node_ptr_z)
+      | Im_type(type_node_ptr_z)
+      | Im_op    -- removed "operand *"
+      | Im_instr -- removed "instruction *"
+      | Im_undef
+
+
+-- derived types
+
+tree_node = Tree_instr(instruction ins)
+          | Tree_loop(tree_node* bod, 
+                      tree_node* tst, 
+                      label_sym_ptr_z clab,
+                      label_sym_ptr_z blab, 
+                      label_sym_ptr_z tol)
+          | Tree_for(var_sym_ptr_z ind,
+                     tree_for_test tst, 
+                     label_sym_ptr_z clab, 
+                     label_sym_ptr_z blab,
+                     tree_node* bod,
+                     tree_node* lpad,
+                     tree_node* lower,
+                     tree_node* upper,
+                     tree_node* step)
+          | Tree_if(label_sym_ptr_z jmp, 
+                    tree_node* hdr,
+                    tree_node* then,
+                    tree_node* els)
+          | Tree_block(tree_block_z rest_z)
+           attributes (unsigned num)
+
+-- 2nd generation inheritance
+tree_block_z = Tree_block_z(block_symtab_ptr_z s)
+             | Tree_proc_z(proc_symtab_ptr_z s,
+                           proc_sym_ptr_z psym)
+              attributes (tree_node* bod)
+
+sym_node = Var_sym(type_node_ptr_z typ,
+                   boolean defd,
+                   var_sym_ptr_z the_parent_var,
+                   int the_offset,
+                   var_sym_ptr_z* children,
+                   boolean is_param,
+                   boolean is_addr_taken,
+                   boolean is_reg)
+         | Label_sym
+         | Proc_sym(-- removed "file_set_entry fse,"
+                    -- removed "int file_pos,"
+                    -- remove "boolean written,"
+                    func_type_ptr_z typ,
+                    src_lang_type srclang,
+                    tree_node pr)  -- !!! actually Tree_proc
+          attributes (string nm,
+                      base_symtab_ptr_z table,
+                      int id,
+                      boolean ext,
+                      boolean is_userdef,
+                      sym_node_ptr_z id_z)
+
+-- 8 instruction formats
+instruction = In_rrr(operand src1,
+                     operand src2)
+            | In_bj(label_sym_ptr_z targ, 
+                    operand src)
+            | In_ldc(immed val)
+            | In_cal(operand addr,
+                     unsigned nargs,
+                     operand* args)
+            | In_array(operand base,
+                       unsigned elemsz,
+                       unsigned dms,
+                       operand* indxs,
+                       operand* uppers,
+                       operand offsetop,
+                       unsigned off)
+            | In_mbr(operand src,
+                     int low,
+                     unsigned nlabs,
+                     label_sym_ptr_z dlab,
+                     label_sym_ptr_z* labs)
+            | In_lab(label_sym_ptr_z lab)
+            | In_gen(string opnm,
+                     unsigned ns,
+                     operand* srcs)
+             attributes (if_ops op, 
+                         type_node_ptr_z typ, 
+                         unsigned inum,
+                         dst_operand dst)
+
+type_node = Modifier_type(type_node_ptr_z typ)
+          | Ptr_type(type_node_ptr_z ref)
+          | Array_type(type_node_ptr_z elemt,
+                       array_bound low,
+                       array_bound uppr)
+          | Func_type(type_node_ptr_z ret,
+                      unsigned nargs,
+                      type_node_ptr_z* argts,
+                      boolean vargs,
+                      boolean arg_info)
+          | Struct_type(string my_name,
+                        int sz,
+                        unsigned ntypes,
+                        type_node_ptr_z* types,
+                        string* names,
+                        int* offsets)
+          | Base_type(base_type_z rest_z)
+           attributes(type_ops oper,
+                      base_symtab_ptr_z table,
+                      unsigned id,
+                      type_node_ptr_z id_z)
+
+-- 2nd generation inheritance
+base_type_z = Base_type_z
+            | Enum_type_z(string my_name,
+                          unsigned nvals,
+                          string* names,
+                          int* vals) 
+              attributes(int sz,
+                         boolean sgn)
+
+array_bound = Bound_cnst(int cnst)
+            | Bound_var(var_sym_ptr_z var)
+
+operand = Oper_sym(var_sym_ptr_z)
+        | Oper_instr(instruction)
+        | Oper_null
+
+dst_operand = Dst_Oper_sym(var_sym_ptr_z)
+            | Dst_Oper_instr
+            | Dst_Oper_null
+
+base_symtab = Global_symtab
+            | File_symtab-- removed "(file_set_entry fset)"
+            | Block_symtab(block_symtab_z rest_z)
+             attributes (sym_node* syms,
+                         zvar_def* defs,
+                         type_node* typs,
+                         base_symtab_ptr_z par,
+                         base_symtab_ptr_z* childs,
+                         string nm,
+                         base_symtab_ptr_z id_z)
+
+-- 2nd generation inheritance
+block_symtab_z = Block_symtab_z
+               | Proc_symtab_z(sym_node_ptr_z* prms,
+                               unsigned next_inum)
+}

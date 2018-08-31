@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>asdlGen Reference Manual: Introduction</TITLE>
+ <LINK HREF="manual-2.html" REL=next>
+
+ <LINK HREF="manual.html#toc1" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="manual-2.html">Next</A>
+Previous
+<A HREF="manual.html#toc1">Contents</A>
+<HR>
+<H2><A NAME="sect.introduction"></A> <A NAME="s1">1. Introduction</A></H2>
+
+<P> 
+<P>The 
+<A HREF="http://www.cs.virginia.edu/zephyr">Zephyr</A> Abstract Syntax Description
+Lanuguage (ASDL) is a language designed to describe the tree-like data
+structures in compilers. Its main goal is to provide a method for
+compiler components written in different languages to
+interoperate. ASDL makes it easier for applications written in a
+variety of programming languages to communicate complex recursive data
+structures. 
+<P><CODE>asdlGen</CODE> is a tool that takes ASDL descriptions and produces
+implementations of those descriptions in a variety of popular
+languages. ASDL and <CODE>asdlGen</CODE> together provide the following advantages
+<UL>
+<LI>Concise descriptions of important data structures.
+</LI>
+<LI>Automatic generation of data structure implementations for
+C, C++, Java, Standard ML, and Haskell.
+</LI>
+<LI>Automatic generation of functions to read and write the data
+structures to disk in a machine and language independent way.</LI>
+</UL>
+<P>ASDL descriptions describe the tree-like data structures such as
+abstract syntax trees (ASTs) and compiler intermediate representations
+(IRs). Tools such as <CODE>asdlGen</CODE> automatically produce the equivalent
+data structure definitions for C, C++, Java, Standard ML, and Haskell.
+<CODE>asdlGen</CODE> also produces functions for each language that read and
+write the data structures to and from a platform and language
+independent sequence of bytes. The sequence of bytes is called a
+<EM>pickle</EM>.
+<P>ASDL pickles can be interactively viewed and edited with a graphical
+<A HREF="http://www.cs.princeton.edu/zephyr/browser">browser</A>, or pretty printed into a
+simple textual format. The browser provides some advanced features
+such as display styles and tree based versions of standard unix tools
+such as <CODE>diff</CODE> and <CODE>grep</CODE>. ASDL is part of the Zephyr 
+<A HREF="http://www.cs.virginia.edu/nci">National Compiler Infrastructure</A> project.
+<P>
+<P>
+<P>
+<HR>
+<A HREF="manual-2.html">Next</A>
+Previous
+<A HREF="manual.html#toc1">Contents</A>
+</BODY>
+</HTML>

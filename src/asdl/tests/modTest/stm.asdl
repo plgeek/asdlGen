@@ -1,0 +1,8 @@
+module Stm (imports Pos
+            imports Exp) {
+
+stm = Compound(stm head,stm next)
+    | Assign(identifier id,Exp.exp exp) 
+    | Print(Exp.exp*)
+     attributes (Pos.pos p,int? value)
+}

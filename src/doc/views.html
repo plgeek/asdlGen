@@ -1,0 +1,255 @@
+<html>
+<head>
+<title>User Views</title>
+</head>
+<body BGCOLOR=white>
+<h1>Introduction</h1>
+<p>
+<pre>
+module IntMap {
+  int_map = (int size,entries map)
+  entries = (entry* entries)
+  entry = (int key, int value)
+}
+</pre>
+
+The above is one possible abstract description of a mapping from integers to
+integers.  It would be more efficient to <em>implement</em> such a mapping as
+a binary tree. Described as with the ASDL definition below.
+<pre>
+module IntMap {
+  int_map = (size int,map tree)
+  tree = Node(int key,int value,tree left,tree right)
+       | Empty
+}
+</pre>
+<p>
+Although this is a much more efficient representation it exposes
+implementation details in the pickle. If we decided to change the
+implementation of <tt>int_maps</tt> to use a hash table the underlying
+pickle format will change too, and all other clients that use our pickles
+will have to be updated.
+<p>
+Views let you write the first version so you get a simple and abstract
+representation on the disk, while letting you choose a different efficient
+in-core representation. They do this by letting the user control how
+<tt>asdlGen</tt> converts the description of a module into an actual
+implementation. 
+
+<h1>Syntax</h1>
+Here's the view syntax in EBNF. <b> This is all a hack right now the syntax
+is likely to change</b>.
+<pre>
+view       = "view" id "{" {view_entry} "}"
+view_entry = id "." {id} "&lt;=" id lit_txt
+           | "module" id "&lt;=" id lit_txt
+</pre>
+where lit_txt is either a ":" followed by some arbitrary text that continues
+to the end of the line or a "%%" balanced by a "%%" at the beginning of a
+line. The lit_txt is then passed to another internal parser that interprets
+the string based on the property name. <em> This is a hack to make the view
+mechanism extendible without changing the grammar.</em>
+
+<h1>Example</h1>
+<pre>
+module IntMap {
+  int_map = (int size,entries map)
+  entries = (entry* entries)
+  entry = (int key, int value)
+}
+view C {
+
+  IntMap.entries &lt;= natural_type          : Bst.bst
+  IntMap.entries &lt;= wrapper               : entries2bst
+  IntMap.entries &lt;= unwrapper             : bst2entries
+  module  IntMap &lt;= interface_prologue    
+%%
+#include "bst.h"
+%%
+
+  module  IntMap &lt;= implementation_prologue
+%%
+  /* proto_types for wrapper functions */
+  static entries2bst(IntMap_entries_ty x) {
+    /* code to convert int_map to a bst */ 
+ }
+
+  static IntMap_entries_ty bst2entries(Bst_bst_ty x) {
+ /* code to convert bst to an int map */
+ }
+%%
+}
+
+view C_with_HT {
+
+  IntMap.entries &lt;= natural_type          : Ht.ht
+  IntMap.entries &lt;= wrapper               : entries2ht
+  IntMap.entries &lt;= unwrapper             : ht2entries
+  module IntMap  &lt;= interface_prologue    : #include "ht.h"
+  module IntMap  &lt;= implementation_prologue 
+%%
+ /* ... */
+%%
+}
+</pre>
+<p>
+Views like modules are named. In this example we have two different views
+named <tt>C</tt> and <tt>C_with_HT</tt>. By default when translating a
+module <tt>asdlGen</tt> looks for a language specific view depending on the
+type of output code. When <tt>asdlGen</tt> is invoked with <tt>--lang</tt> it 
+looks for the viewed named <tt>Lang</tt>. The default view can be overridden
+with the <tt>--view</tt> command line. 
+
+<p>N.B. Currently only the C and SML translators do anything interesting
+with the view data.
+<p>
+Views contain entries of the form
+<center>
+   <em>entity</em> &lt;= <em> property_name </em> <em> value </em>
+</center>
+
+Entities name either an ASDL type, constructor, or module. Some entries are
+language independent others are language dependent.  You can have many views
+with the same name. The entries of two views with the same name are merged
+and consists of the union of the entries in both. If two views name the same
+entity, it is an error. <b>Currently I don't check for this so you randomly
+get one or the other.</b>
+<p>
+It is illegal to name an ASDL base type as an entity. e.g.
+<center>
+int &lt;= ...
+</center>
+<em>This restriction maybe removed in the future.</em>
+
+<p>For example <tt>natural_type</tt> is a property that is a language
+independent identifier which names the type identifier which describes
+the in-core type to use <em>in place of</em> <tt>entries</tt>. In the first
+view it refers to the type <tt>bst</tt> which lives in a <tt>Bst</tt>
+module. It is mangled so that it appears in the C code as
+<tt>Bst_bst_ty</tt>.  Using the standard ASDL mangling conventions.
+
+<p>The module properties <tt>interface_prologue</tt> and
+<tt>implementation_prologue</tt> are language dependent since they allow the
+literal inclusion of arbitrary user defined code in the output. In future
+there will be better support to split  the language dependent and
+independent parts of views, as well as support to inherit or import entries 
+from other views.
+
+<p>Running <tt>asdlGen</tt> on the above code produces <a
+href=IntMap.h><tt>IntMap.h</tt></a> and <a
+href=IntMap.c><tt>IntMap.c</tt></a>.  Notice how the definition for the
+<tt>entries</tt> type is not completely removed. You need this type
+definition in order to write the conversion functions. Everywhere there
+normally would have been a <tt>IntMap_entires_ty</tt> type there now is the
+user type <tt>Bst_bst_ty</tt>.  For example there is still a constructor
+prototype and constructor for <tt>IntMap_entries_ty</tt>. But the
+<tt>IntMap_int_map</tt> constructor now expects an argument of type
+<tt>Bst_bst_ty</tt>. The structs also reflect this.
+
+<pre>
+IntMap_entries_ty IntMap_entries(IntMap_entry_list_ty entries);
+IntMap_int_map_ty IntMap_int_map(int_ty size, Bst_bst_ty map); 
+</pre>
+Notice also that the pickle functions now return and expect a
+<tt>Bst_bst_ty</tt> 
+<pre>
+Bst_bst_ty IntMap_read_entries(instream_ty s);
+void IntMap_write_entries(Bst_bst_ty x, outstream_ty s);
+</pre>
+<p>The implementation of the pickle functions now also call the user
+supplied <tt>wrapper</tt> and <tt>unwrapper</tt> functions. The
+<tt>wrapper</tt> and <tt>unwrapper</tt> function names are language
+<em>independent</em> identifiers. It just so happens they don't need to be
+mangled. Since they're also local to our implementation we don't qualify
+them.
+<pre>
+Bst_bst_ty IntMap_read_entries(instream_ty s)
+{
+     Bst_bst_ty ret;
+     ....
+          tmp->entries = IntMap_read_entry_list(s);
+          ret = bst2entries(tmp);
+     return ret;
+}
+
+void IntMap_write_entries(Bst_bst_ty x, outstream_ty s)
+{
+    IntMap_entries_ty tmp;
+    tmp = entries2bst(x);
+    IntMap_write_entry_list(tmp->entries, s);
+}
+</pre>
+<h1>Properties of Entities</h1>
+<h2>Constructors</h2>
+<dl>
+<dt><tt>enum_value</tt> 
+<dd>expects integer 
+<p>
+Set the value of the enumeration produced in the code. 
+<pre>
+
+view C {
+  Slp.Times &lt= enum_value : 1
+  Slp.Plus  &lt= enum_value : 100
+  Slp.Print &lt= enum_value : 5
+}
+</pre>
+</dl>
+
+<h2>Types</h2>
+<dl>
+	<dt><tt> user_attribute</tt>
+	<dd>The type of the <tt>client_data</tt> user attribute added to a
+	given type.
+	<dt><tt> natural_type</tt> 
+	<dd>A qualified identifier that names a type that
+	  describes the type to use in
+          place of the ASDL type. 
+	<dt><tt>natural_type_con</tt> 
+	<dd>A qualified identifier that names a type constructor that
+	  is applied to the default ASDL type to describes the type to use in
+          place of the ASDL type. 
+	<dt><tt>wrapper</tt> 
+	<dd> A qualified identifier that names a function that converts from
+	  the default ASDL type
+          to a special type used in its place. 
+	<dt><tt>unwrapper</tt>
+	<dd> A qualified identifier that names a function that converts from a
+	  special in-core type
+          to the default ASDL type. 
+	<dt><tt>user_reader</tt>
+	<dd> Identifier of function to call in order to implement
+	a pickle reader in place of the default pickler code.
+	<dt><tt>user_writer</tt>
+	<dd>Identifier of function to call in order to implement
+	a pickle writer in place of the default pickler code.
+
+<dt>
+</dl>
+<h2>Modules</h2>
+<dl>
+	<dt><tt>interface_prologue</tt>
+	<dd> Include text verbatim after the introduction of the base
+	environment, but before any type defined in the module interface.
+	<dt><tt>interface_epilogue</tt>     
+	<dd> Include text verbatim after all 
+	   types defined in the module interface have been defined. 
+	<dt><tt>implementation_prologue</tt>     
+	<dd>  Include text verbatim after the introduction of the base
+	environment, but before any other implementation code is defined.
+	<dt><tt>implementation_epilogue</tt>     
+	<dd>  Include text verbatim after all definitions
+	   defined in the module implementation.
+</dl>
+<hr>
+<em>$Date: 1997/12/11 04:48:25 $</em>
+</body>
+</html>
+
+
+
+
+
+
+
+

@@ -1,0 +1,270 @@
+<label id="sect.views"><p>
+Views provide a general mechanism to customize the output of
+&asdlGen;. Views allow description writers to annotate modules,
+constructors, and types with directives or properties that are interpreted
+by &asdlGen;. Currently  &asdlGen; properties that allow for the 
+<itemize>
+<item>Inclusion of arbitrary user code in the resulting output
+<item>Automatic coercion of specific types into more efficient user
+defined representations
+<item>Addition of extra user defined attributes and initialization code 
+<item>Specialized user defined routines to read and write data structures to
+disk 
+<item> Control over how the names of types, constructors, and modules names
+are mapped into the output language to resolve style issues and name space
+conflicts.
+<item> Control over the tag values
+<item> Addition of documentation that describes the meaning of types
+constructors and modules
+</itemize>
+
+<sect1>Interpretation of View Entry Values<p>
+See the section on <ref id="sect.syntax" name="Input Syntax"> for details on
+view the syntax and some basic view terminology. The view syntax associates
+an arbitrary string whose interpretation depends on the property it is
+assigned too. Currently there is a small set of standard interpretations.
+
+<descrip>
+<tag/integer/ An integral number in decimal notation.
+<tag/string/  A raw string.
+<tag/boolean/ A boolean value either "<tt/true/" or "<tt/false/".
+
+<tag/qualified identifier/ A possibly qualified identifier. For example
+"<tt/M.t/" or "<tt/t/". Qualified identifiers are language independent
+identifiers that are translated to the appropriate output language in a
+uniform way.  For example <tt/M.t/ would appear as <tt/M_t/ in C and C++ but
+remain <tt/M.t/ in SML, Java, and Haskell.
+</descrip>
+
+
+<sect1>Adding User Code<p>
+It is useful to be able to add arbitrary user code to the modules
+produced by &asdlGen;. Modules have six properties that can be set to allow
+the addition of user code. strings. 
+
+<descrip>
+        <tag><tt/interface_prologue/</tag>
+	Include text verbatim after the introduction of the base
+	environment, but before any type defined in the module interface.
+
+	<tag><tt/interface_epilogue/</tag>     
+        Include text verbatim after all types defined in the module
+        interface have been defined.
+	
+        <tag><tt/implementation_prologue/</tag>     
+        Include text verbatim after the introduction of the base
+	environment, but before any other implementation code is defined.
+	
+       <tag><tt/implementation_epilogue/</tag>     
+       Include text verbatim after all definitions defined in the module
+       implementation.  
+
+       <tag><tt/suppress/</tag>
+       Default value is false. Do not produce any code for this module, 
+       assume it's implementation is 
+       written by hand. It's often a good idea to first generate code and then
+       set the flag, so the generated code can be used as stubs for the 
+       user implementation.
+
+       <tag><tt/is_library/</tag>     
+       Default value is false. If true assume all types can be used
+       as lists or options and generate any needed code, rather then 
+       generating list and option code on demand. Useful for generating stubs.
+
+</descrip>
+
+The precise meaning of interface and implementation for the different
+languages is as follows
+<descrip>
+<tag/C/
+  The interface is the <tt/.h/ file and the implementation is the <tt/.c/
+  file.
+
+<tag/C++/
+ The interface is the <tt/.hxx/ file and the implementation is the <tt/.cxx/
+ file.
+
+<tag/Java/
+ Java has no notion of interfaces so this property is ignored. The
+ <tt/implementation_prologue/ is placed outside the class definition of a
+ Java class that contains package wide global constants. The
+ <tt/implementation_epilogue/ is placed inside the class definition of a Java
+ class that contains package wide global constants. 
+
+<tag/ML/
+  The interface is the generated signature the implementation is the structure.
+
+<tag/Haskell/
+  The interface is the export list of the module. The implementation is the
+  module body.  
+</descrip>
+<sect1>Other Properties<p>
+<descrip>
+       <tag><tt/doc_string/</tag>
+        All entities have this property. Its value is interpreted as a
+        string. Currently only the <tt/--doc/ command recognizes the
+        property. It includes the property value in the HTML documentation
+        produced for the module.
+ 
+	<tag><tt/source_name/</tag> 
+        All entities have this property.  The value is interpreted as a
+        string. Choose a different name for the type constructor or module
+        in the output code. The name has no case restrictions. This is
+        particularly useful when producing Java code on Windows NT/95 since
+        the file system is case insensitive and types and constructors that
+        differ only in case will cause problems.
+
+        <tag><tt/user_attribute/</tag>     
+	Property of types only.	The value is interpreted as a qualified 
+	identifier. Add a field called <tt/client_data/ as an
+	attribute to the type. The value is the qualified identifier that
+	represents an arbitrary user type of the field. The <tt/client_data/
+	field is ignored by the pickling code and does not appear in
+	constructors. This property is currently only recognized when
+	outputting C.
+
+        <tag><tt/user_init/</tag>     
+        Property of types only. The value is interpreted as a qualified
+        identifier. Call the function specified by the value before
+        returning a the data structure created by a constructor function.
+        This property is currently only recognized when outputting C.
+
+        <tag><tt/base_class/</tag>     
+	Property of types only. The value is interpreted as a qualified
+	identifier. The name of the class from which all classes generated
+	for that type should inherit from. This property is recognized only
+	when outputting C++ and Java.
+	
+       <tag><tt/reader/</tag>     
+       Property of types only. The value is interpreted as a qualified
+       identifier.  Replace the body of the read pickle function for this
+       type with a call to a function with the proper arguments. 
+
+       <tag><tt/writer/</tag>     
+       Property of types only. The value is interpreted as a qualified
+       identifier.  Replace the body of the writer pickle function for this
+       type with a call to a function with the proper arguments. 
+
+       <tag><tt/enum_value/</tag> 
+       Property of constructors only. The value is interpreted as an integer.
+       Use this integer value as the <tt/internal/ tag value for the
+       constructor. The external pickle tag remains unchanged. 
+       This property is recognized only when outputting C, C++, and Java. 
+
+</descrip>
+
+<sect1>Choosing a Different Representation<p>
+<tscreen><verb>
+module IntMap {
+  int_map = (int size,entries map)
+  entries = (entry* entries)
+  entry   = (int key, int value)
+}
+</verb></tscreen>
+The above is one possible abstract description of a mapping from integers to
+integers.  It would be more efficient to <em/implement/ such a mapping as
+a binary tree. Described as with the ASDL definition below.
+<tscreen><verb>
+module IntMap {
+  int_map = (size int,map tree)
+     tree = Node(int key,int value,tree left,tree right)
+          | Empty
+}
+</verb></tscreen>
+
+Although this is a much more efficient representation it exposes
+implementation details. If we decided to change the implementation of
+<tt/int_maps/ to use a hash table the all other clients that use our type
+will have to be updated.
+
+The view properties <tt/natural_type/, <tt/natural_type_con/, <tt/wrapper/,
+and <tt/unwrapper/ provide a general mechanism to choose a different
+more efficient representation through coercion functions. All of these
+properties apply to types only and are interpreted as qualified identifiers.
+
+<descrip> 
+<tag><tt/natural_type/</tag>
+The type to use in place of the original type in all the resulting code. 
+Supported by all output languages.
+
+<tag><tt/natural_type_con/</tag>
+A unary type constructor to apply to the old type to get a new type to
+use in all the resulting code. e.g. ref in ML to make a type
+mutable. Supported by ML and Haskell.  <em/Support for C++ templates
+will be added in the near future./
+
+<tag><tt/wrapper/</tag>
+A function to convert the new type to the old type when writing the
+pickle. Supported by all output languages.
+
+<tag><tt/unwrapper/</tag>
+A function to convert the old type to the new type when reading the pickle. 
+Supported by all output languages. 
+</descrip>
+
+When using <tt/natural_type/ and <tt/natural_type_con/ the automatically
+generated type definitions for the original type still remain, but all other
+references to the original type in constructors, picklers, and other type
+definitions that referred to it are replaced with the new type. The original
+definition must remain to support pickling of the type. Pickling is achieved
+by appropriately coercing the new type to the old type and vice versa with
+functions specified by <tt/wrapper/ and <tt/unwrapper/ properties.
+
+<sect2>Examples<p>
+<em/Need more examples/
+<tscreen><verb>
+module Slp {
+
+ real = (int mantissa, int exp)
+...
+  exp = Id(identifier id)
+      | Num(int v)
+      | Op(exp lexp,binop?,exp rexp)
+       attributes (real? value)	
+...
+
+}
+
+view C {
+
+-- represent reals as a double
+
+  Slp.exp <= {
+   natural_type : my_real
+   wrapper      : real2my_real
+   unwrapper    : my_real2real
+  }
+  
+  module Slp <= {
+  interface_epilogue : typedef double my_real_ty
+  
+  implementation_prologue
+%%
+  my_real_ty real2my_real(Slp_real_ty x) {
+    /* hairy code to actually do this */
+  }
+
+  Slp_real_ty my_real2real(my_real_ty x) {
+    /* hairy code to actually do this */
+  }
+%% 
+  } 
+}
+
+view SML {
+   -- unpickle exp trees as a mutable type
+    Slp.exp <= {
+       natural_type_con : ref
+       wrapper          : !
+       unwrapper        : ref
+    }
+
+}
+</verb></tscreen>
+
+
+
+
+
+
+

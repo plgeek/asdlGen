@@ -1,0 +1,49 @@
+Library
+structure Identifier
+structure SexpLex
+structure SexpPkl
+structure StdPkl
+structure StdPrims
+structure StdPrimsUtil
+structure StdTypes
+structure StdTypesUtil
+
+signature IDENTIFIER
+signature SEXP_LEX
+signature SEXP_PKL
+signature STD_PKL
+signature STD_PRIMS
+signature STD_PRIMS_UTIL
+
+signature STD_TYPES
+signature STD_TYPES_UTIL
+
+is
+smlnj-lib.cm
+
+identifier.sig
+identifier.sml
+
+pkl.sig
+pkl-int.sml
+
+std-pkl.sig
+std-pkl.sml
+
+sexp-pkl.sig
+sexp-pkl.sml
+sexp-lex.sig
+sexp-lex.sml
+
+std-prims.sig
+std-prims.sml
+
+std-prims-util.sig
+std-prims-util.sml
+
+std-types.sml
+share.sml
+(*
+pkl-real.sml
+
+*)

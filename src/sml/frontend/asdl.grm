@@ -1,0 +1,221 @@
+structure T =  struct open T StdPrims end
+fun check_first p f msg s =
+    if p (String.sub(s,0)) then s
+    else let val fixed = f s
+	 in Error.warn [msg, "changing ",s," to ",fixed]; fixed
+	 end
+
+val mkconid = 
+	  Identifier.fromString o
+	  (check_first Char.isUpper
+	   (String.translate (Char.toString o Char.toUpper))
+	   "Constructor must begin with an uppercase letter ")
+val mktyid =
+	  Identifier.fromString  o (check_first
+	  Char.isLower
+	  (String.translate (Char.toString o Char.toLower))
+	  "Type must begin with a lowercase letter ")
+%%
+%header (functor AsdlLrValsFun(structure Token : TOKEN
+   			       structure T     : ASDL))
+    
+%eop EOF 
+
+(* %pos declares the type of positions for terminals.
+   Each symbol has an associated left and right position. *)
+
+%pos int
+
+%term     LBRACK | RBRACK
+	| LBRACE | RBRACE
+        | LANGLE | RANGLE
+        | TOP
+        | LPAREN | RPAREN
+        | QUOTE of string
+        | FIELDSEP
+        | DOT
+        | SEQ | OPT | SHARED
+        | EQ
+        | PIPE
+        | ATTRIBUTES of string
+        | MODULE  of string
+        | PRIMITIVE of string
+        | ALIAS  of string
+        | VIEW  of string
+	| ID of string
+	| IMPORTS of string
+	| EOF	
+
+%nonterm  
+	  type_decl of T.type_decl
+	| type_decl_list of T.type_decl list 
+	| constructor of T.constructor
+	| constructor_list of T.constructor list 
+	| tycon of T.tycon
+	| field of T.field
+        | field_list' of T.field list
+	| field_list of T.field list 
+	| path of T.path
+	| import_list of T.import list
+        | id_opt of T.identifier option
+        | id of T.identifier
+        | con_id of T.identifier
+        | ty_id of T.identifier
+        | decl of T.decl	
+	| decl_list of T.decl list
+        | start of T.decl list
+	| view_decl_list of T.view_decl list
+        | view_entity of T.identifier list
+        | view_prop of string
+        | view_entity_list of T.identifier list list
+        | view_av_list of (string * string) list
+        | view_ev_list of (T.identifier list * string)  list
+        | export_list of T.identifier list
+%name Asdl
+%noshift EOF
+%verbose
+%%
+(* the parser returns the value associated with the expression *)
+start: decl_list (decl_list)
+
+decl_list: decl decl_list (decl::decl_list)
+         | (nil)
+
+decl     : MODULE id LBRACE type_decl_list RBRACE
+              (T.Module{name=id,imports=[],decls=type_decl_list}) 
+         | MODULE id LPAREN import_list RPAREN LBRACE type_decl_list RBRACE
+              (T.Module{name=id,imports=import_list,decls=type_decl_list}) 
+         | MODULE TOP LBRACE type_decl_list RBRACE
+              (T.Module{name=Identifier.fromString "",
+			imports=[],decls=type_decl_list}) 
+         | MODULE TOP LPAREN import_list RPAREN LBRACE type_decl_list RBRACE
+              (T.Module{name=Identifier.fromString "",
+			imports=import_list,decls=type_decl_list}) 
+         | VIEW id LBRACE view_decl_list RBRACE
+	      (T.View{name=id,decls=view_decl_list})
+         | PRIMITIVE MODULE id LBRACE export_list RBRACE
+	      (T.PrimitiveModule{name=id,exports=export_list})
+
+export_list : id export_list (id::export_list)
+            | ([])
+
+import_list : IMPORTS id import_list
+	      (T.Imports{module=id,alias=NONE}::import_list)
+            | IMPORTS id ALIAS id import_list 
+                 (T.Imports{module=id1,alias=SOME id2}::import_list)
+             | ([])
+		
+ty_id     : ID      (mktyid ID)
+          | MODULE  (mktyid MODULE)
+	  | IMPORTS (mktyid IMPORTS)
+          | VIEW    (mktyid VIEW)
+          | ALIAS   (mktyid ALIAS)
+          | PRIMITIVE (mktyid PRIMITIVE)
+
+con_id    : ID      (mkconid ID)
+          | MODULE  (mkconid MODULE)
+	  | IMPORTS (mkconid IMPORTS)
+          | VIEW    (mkconid VIEW)
+          | ALIAS   (mkconid ALIAS)
+          | PRIMITIVE (mkconid PRIMITIVE)
+		
+id        : ID         (Identifier.fromString ID)
+          | MODULE (Identifier.fromString MODULE)
+          | IMPORTS (Identifier.fromString IMPORTS)
+          | VIEW (Identifier.fromString VIEW)
+          | ALIAS  (Identifier.fromString ALIAS)
+          | PRIMITIVE  (Identifier.fromString PRIMITIVE)
+
+id_opt    : id (SOME id)
+          | (NONE)
+
+path      : id    ({qualifier=NONE,base=id})
+          | id DOT id ({qualifier=SOME id1,base=id2})
+
+type_decl : ty_id EQ constructor constructor_list 
+               ATTRIBUTES LPAREN field_list' RPAREN
+	       (T.SumType {name=ty_id,attribs=field_list',
+			   c=constructor,cs=constructor_list})
+           | ty_id EQ constructor constructor_list
+	       (T.SumType {name=ty_id,attribs=[],
+			   c=constructor,cs=constructor_list})
+           | ty_id EQ LPAREN field_list' RPAREN
+	     (T.ProductType{name=ty_id,f=hd field_list',fs= tl field_list'})
+
+type_decl_list: type_decl type_decl_list (type_decl::type_decl_list)
+              | (nil)
+ 
+constructor       : con_id field_list ({name=con_id,fs=field_list})
+constructor_list  : PIPE constructor constructor_list
+                         (constructor::constructor_list)
+                  | (nil)
+
+tycon : OPT (T.Option)
+              | SEQ (T.Sequence) 
+              | SHARED (T.Shared)
+field     :  path id_opt ({typ=path,label_opt=id_opt,tycon_opt=NONE})
+          |  path tycon id_opt 
+               ({typ=path,label_opt=id_opt,tycon_opt=SOME tycon})
+
+field_list: LPAREN field_list' RPAREN (field_list')
+           | (nil)
+
+field_list': field FIELDSEP field_list' (field::field_list')
+           | field                        ([field])
+
+
+(* hacked ugly syntax for now *)
+
+view_entity : id DOT id ([id1,id2])
+            | id DOT id DOT id ([id1,id2,id3])
+            | MODULE id ([id])
+            | TOP DOT id DOT id ([Identifier.fromString "",id1,id2])
+            | TOP DOT id ([Identifier.fromString "",id1])
+            | MODULE TOP ([Identifier.fromString ""])
+           
+view_prop : LANGLE EQ ID (ID)
+
+view_entity_list : view_entity view_entity_list (view_entity::view_entity_list)
+                 | (nil)
+
+view_av_list : ID QUOTE view_av_list 
+                 ((ID,QUOTE)::view_av_list)
+             | (nil)
+
+view_ev_list : view_entity QUOTE view_ev_list
+		 ((view_entity,QUOTE)::view_ev_list)
+             | (nil)
+
+view_decl_list: view_entity view_prop QUOTE view_decl_list
+              ({entity=view_entity,prop=view_prop,value=QUOTE}::view_decl_list)
+
+	    | LBRACE view_entity_list RBRACE view_prop QUOTE view_decl_list
+	      (List.foldr (fn (x,xs) =>
+			   {entity=x,prop=view_prop,value=QUOTE}::xs)
+	       view_decl_list view_entity_list)
+
+	    | view_prop LBRACE view_ev_list RBRACE view_decl_list
+	      (List.foldr (fn ((e,v),xs) =>
+			   {entity=e,prop=view_prop,value=v}::xs)
+	       view_decl_list view_ev_list)
+
+	    | view_entity LANGLE EQ LBRACE view_av_list RBRACE view_decl_list
+	      (List.foldr (fn ((a,v),xs) =>
+			    {entity=view_entity,prop=a,value=v}::xs)
+	       view_decl_list view_av_list)
+
+             | LBRACE view_entity_list RBRACE LANGLE EQ
+	       LBRACE view_av_list RBRACE view_decl_list
+	       (let fun mk_ve_list (ve,rest) =
+		  List.foldr (fn ((a,v),xs) =>
+			      {entity=ve,prop=a,value=v}::xs)
+	            rest view_av_list
+		in
+		    List.foldr mk_ve_list view_decl_list view_entity_list 
+		end)
+
+	    | (nil)
+
+	      
+
+

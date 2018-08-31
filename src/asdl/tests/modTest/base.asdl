@@ -1,0 +1,3 @@
+module Pos {
+	pos = (string? file,int line, int offset)
+}

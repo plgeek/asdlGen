@@ -1,0 +1,17 @@
+<label ref="sect.glossary"><p>
+
+
+<descrip>
+<tag/ASDL/
+<tag/IR/
+<tag/AST/
+<tag/interface/
+<tag/implementation/
+<tag/module/
+<tag/type environment/
+<tag/view/
+<tag/view entity/
+<tag/view property/
+<tag/qualified idenitifier/
+<tag/pickle/
+<descrip>

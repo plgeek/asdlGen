@@ -1,0 +1,30 @@
+(* 
+ * Copyright (c) 1997, 1998 Princeton University
+ *)
+Group is
+base/asdl-base.cm
+frontend/sources.cm
+translate/sources.cm
+(*type-pickle/sources.cm
+pp-pickle/sources.cm*)
+convert/sources.cm
+
+smlnj-lib.cm
+
+(*main/depends.sml*)
+main/main.sml
+main/link.sml
+main/lib-files.sml
+main/export.sml
+
+test/harness.sml
+build/build-c.sml
+build/build-cxx.sml
+build/build-sml.sml
+build/build-install.sml
+build/build-clean.sml
+build/build-doc.sml
+build/build.sml
+
+config.sml 
+

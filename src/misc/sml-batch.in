@@ -1,0 +1,16 @@
+#! /bin/sh
+# @configure_input@
+cmfile=sources-$$.cm
+cat > ${cmfile} <<EOF
+Group  is
+$@
+EOF
+@SML_CM@ <<EOF
+val path = String.tokens (fn x => x = #":") "${cmpath}";
+CM.set_path (SOME (path@(CM.set_path NONE)));
+((CM.make' ("${cmfile}") handle _ => OS.Process.exit OS.Process.failure);
+    OS.Process.exit OS.Process.success; ())
+EOF
+ret=$?
+rm -rf ${cmfile} CM
+exit $ret

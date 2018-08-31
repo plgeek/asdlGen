@@ -1,0 +1,31 @@
+<!doctype linuxdoc system [   
+<!entity % decls.common system "src/doc/ldoc/common-decls.ldoc">
+  %decls.common;
+]>
+<article>
+<title>INSTALL notes for &asdlGen; version &asdlGen.version;
+<author>&author.danwang;
+<date>&asdlGen.release-date;
+
+<p> In order of build and install &asdlGen; you must have SML/NJ version
+110.0.6 installed. SML/NJ is available for both Unix and Win32. &asdlGen;
+should build easily on a unix box with SML/NJ installed. On a Win32 box it
+should also build if you have the Cygwin environment installed, but can be
+built manually if need be. (Note: I haven't tested the build on Win32).
+
+See <htmlurl url="http://cm.bell-labs.com/cm/cs/what/smlnj/index.html" 
+     name="http://cm.bell-labs.com/cm/cs/what/smlnj/index.html"> for
+     information on obtaining and installing SML/NJ.
+
+See <htmlurl url="http://sourceware.cygnus.com/cygwin/"
+     name="http://sourceware.cygnus.com/cygwin/"> for information on
+     obtaining and installing Cygwin.
+<p>
+The only <tt/make/ file of any interest is the toplevel
+one. It calls SML to build the system. The ML code determines certain
+useful pieces of information about the current system  using <tt/GNU autoconf/.
+<code>
+% ./configure --prefix=<install-prefix>
+% make all
+</code>
+</article>

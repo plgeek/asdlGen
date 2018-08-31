@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>asdlGen Reference Manual: Views</TITLE>
+ <LINK HREF="manual-6.html" REL=next>
+ <LINK HREF="manual-4.html" REL=previous>
+ <LINK HREF="manual.html#toc5" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="manual-6.html">Next</A>
+<A HREF="manual-4.html">Previous</A>
+<A HREF="manual.html#toc5">Contents</A>
+<HR>
+<H2><A NAME="sect.views"></A> <A NAME="s5">5. Views</A></H2>
+
+<P>Views provide a general mechanism to customize the output of
+<CODE>asdlGen</CODE>. Views allow description writers to annotate modules,
+constructors, and types with directives or properties that are interpreted
+by <CODE>asdlGen</CODE>. Currently  <CODE>asdlGen</CODE> properties that allow for the 
+<UL>
+<LI>Inclusion of arbitrary user code in the resulting output</LI>
+<LI>Automatic coercion of specific types into more efficient user
+defined representations</LI>
+<LI>Addition of extra user defined attributes and initialization code </LI>
+<LI>Specialized user defined routines to read and write data structures to
+disk </LI>
+<LI> Control over how the names of types, constructors, and modules names
+are mapped into the output language to resolve style issues and name space
+conflicts.</LI>
+<LI> Control over the tag values</LI>
+<LI> Addition of documentation that describes the meaning of types
+constructors and modules</LI>
+</UL>
+<P>
+<H2><A NAME="ss5.1">5.1 Interpretation of View Entry Values</A>
+</H2>
+
+<P>See the section on 
+<A HREF="manual-3.html#sect.syntax">Input Syntax</A> for details on
+view the syntax and some basic view terminology. The view syntax associates
+an arbitrary string whose interpretation depends on the property it is
+assigned too. Currently there is a small set of standard interpretations.
+<P>
+<DL>
+<DT><B>integer</B><DD><P>An integral number in decimal notation.
+<DT><B>string</B><DD><P>A raw string.
+<DT><B>boolean</B><DD><P>A boolean value either "<CODE>true</CODE>" or "<CODE>false</CODE>".
+<P>
+<DT><B>qualified identifier</B><DD><P>A possibly qualified identifier. For example
+"<CODE>M.t</CODE>" or "<CODE>t</CODE>". Qualified identifiers are language independent
+identifiers that are translated to the appropriate output language in a
+uniform way.  For example <CODE>M.t</CODE> would appear as <CODE>M_t</CODE> in C and C++ but
+remain <CODE>M.t</CODE> in SML, Java, and Haskell.
+</DL>
+<P>
+<P>
+<H2><A NAME="ss5.2">5.2 Adding User Code</A>
+</H2>
+
+<P>It is useful to be able to add arbitrary user code to the modules
+produced by <CODE>asdlGen</CODE>. Modules have six properties that can be set to allow
+the addition of user code. strings. 
+<P>
+<DL>
+<DT><B><CODE>interface_prologue</CODE></B><DD><P>Include text verbatim after the introduction of the base
+environment, but before any type defined in the module interface.
+<P>
+<DT><B><CODE>interface_epilogue</CODE></B><DD><P>Include text verbatim after all types defined in the module
+interface have been defined.
+<P>
+<DT><B><CODE>implementation_prologue</CODE></B><DD><P>Include text verbatim after the introduction of the base
+environment, but before any other implementation code is defined.
+<P>
+<DT><B><CODE>implementation_epilogue</CODE></B><DD><P>Include text verbatim after all definitions defined in the module
+implementation.  
+<P>
+<DT><B><CODE>suppress</CODE></B><DD><P>Default value is false. Do not produce any code for this module, 
+assume it's implementation is 
+written by hand. It's often a good idea to first generate code and then
+set the flag, so the generated code can be used as stubs for the 
+user implementation.
+<P>
+<DT><B><CODE>is_library</CODE></B><DD><P>Default value is false. If true assume all types can be used
+as lists or options and generate any needed code, rather then 
+generating list and option code on demand. Useful for generating stubs.
+<P>
+</DL>
+<P>The precise meaning of interface and implementation for the different
+languages is as follows
+<DL>
+<DT><B>C</B><DD><P>The interface is the <CODE>.h</CODE> file and the implementation is the <CODE>.c</CODE>
+file.
+<P>
+<DT><B>C++</B><DD><P>The interface is the <CODE>.hxx</CODE> file and the implementation is the <CODE>.cxx</CODE>
+file.
+<P>
+<DT><B>Java</B><DD><P>Java has no notion of interfaces so this property is ignored. The
+<CODE>implementation_prologue</CODE> is placed outside the class definition of a
+Java class that contains package wide global constants. The
+<CODE>implementation_epilogue</CODE> is placed inside the class definition of a Java
+class that contains package wide global constants. 
+<P>
+<DT><B>ML</B><DD><P>The interface is the generated signature the implementation is the structure.
+<P>
+<DT><B>Haskell</B><DD><P>The interface is the export list of the module. The implementation is the
+module body.  
+</DL>
+<H2><A NAME="ss5.3">5.3 Other Properties</A>
+</H2>
+
+<P>
+<DL>
+<DT><B><CODE>doc_string</CODE></B><DD><P>All entities have this property. Its value is interpreted as a
+string. Currently only the <CODE>--doc</CODE> command recognizes the
+property. It includes the property value in the HTML documentation
+produced for the module.
+<P>
+<DT><B><CODE>source_name</CODE></B><DD><P>All entities have this property.  The value is interpreted as a
+string. Choose a different name for the type constructor or module
+in the output code. The name has no case restrictions. This is
+particularly useful when producing Java code on Windows NT/95 since
+the file system is case insensitive and types and constructors that
+differ only in case will cause problems.
+<P>
+<DT><B><CODE>user_attribute</CODE></B><DD><P>Property of types only.    The value is interpreted as a qualified 
+identifier. Add a field called <CODE>client_data</CODE> as an
+attribute to the type. The value is the qualified identifier that
+represents an arbitrary user type of the field. The <CODE>client_data</CODE>
+field is ignored by the pickling code and does not appear in
+constructors. This property is currently only recognized when
+outputting C.
+<P>
+<DT><B><CODE>user_init</CODE></B><DD><P>Property of types only. The value is interpreted as a qualified
+identifier. Call the function specified by the value before
+returning a the data structure created by a constructor function.
+This property is currently only recognized when outputting C.
+<P>
+<DT><B><CODE>base_class</CODE></B><DD><P>Property of types only. The value is interpreted as a qualified
+identifier. The name of the class from which all classes generated
+for that type should inherit from. This property is recognized only
+when outputting C++ and Java.
+<P>
+<DT><B><CODE>reader</CODE></B><DD><P>Property of types only. The value is interpreted as a qualified
+identifier.  Replace the body of the read pickle function for this
+type with a call to a function with the proper arguments. 
+<P>
+<DT><B><CODE>writer</CODE></B><DD><P>Property of types only. The value is interpreted as a qualified
+identifier.  Replace the body of the writer pickle function for this
+type with a call to a function with the proper arguments. 
+<P>
+<DT><B><CODE>enum_value</CODE></B><DD><P>Property of constructors only. The value is interpreted as an integer.
+Use this integer value as the <CODE>internal</CODE> tag value for the
+constructor. The external pickle tag remains unchanged. 
+This property is recognized only when outputting C, C++, and Java. 
+<P>
+</DL>
+<P>
+<H2><A NAME="ss5.4">5.4 Choosing a Different Representation</A>
+</H2>
+
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+module IntMap {
+  int_map = (int size,entries map)
+  entries = (entry* entries)
+  entry   = (int key, int value)
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+
+The above is one possible abstract description of a mapping from integers to
+integers.  It would be more efficient to <EM>implement</EM> such a mapping as
+a binary tree. Described as with the ASDL definition below.
+<BLOCKQUOTE><CODE>
+<PRE>
+module IntMap {
+  int_map = (size int,map tree)
+     tree = Node(int key,int value,tree left,tree right)
+          | Empty
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Although this is a much more efficient representation it exposes
+implementation details. If we decided to change the implementation of
+<CODE>int_maps</CODE> to use a hash table the all other clients that use our type
+will have to be updated.
+<P>The view properties <CODE>natural_type</CODE>, <CODE>natural_type_con</CODE>, <CODE>wrapper</CODE>,
+and <CODE>unwrapper</CODE> provide a general mechanism to choose a different
+more efficient representation through coercion functions. All of these
+properties apply to types only and are interpreted as qualified identifiers.
+<P>
+<DL>
+<DT><B><CODE>natural_type</CODE></B><DD><P>The type to use in place of the original type in all the resulting code. 
+Supported by all output languages.
+<P>
+<DT><B><CODE>natural_type_con</CODE></B><DD><P>A unary type constructor to apply to the old type to get a new type to
+use in all the resulting code. e.g. ref in ML to make a type
+mutable. Supported by ML and Haskell.  <EM>Support for C++ templates
+will be added in the near future.</EM>
+<P>
+<DT><B><CODE>wrapper</CODE></B><DD><P>A function to convert the new type to the old type when writing the
+pickle. Supported by all output languages.
+<P>
+<DT><B><CODE>unwrapper</CODE></B><DD><P>A function to convert the old type to the new type when reading the pickle. 
+Supported by all output languages. 
+</DL>
+<P>When using <CODE>natural_type</CODE> and <CODE>natural_type_con</CODE> the automatically
+generated type definitions for the original type still remain, but all other
+references to the original type in constructors, picklers, and other type
+definitions that referred to it are replaced with the new type. The original
+definition must remain to support pickling of the type. Pickling is achieved
+by appropriately coercing the new type to the old type and vice versa with
+functions specified by <CODE>wrapper</CODE> and <CODE>unwrapper</CODE> properties.
+<P>
+<H3>Examples</H3>
+
+<P><EM>Need more examples</EM>
+<BLOCKQUOTE><CODE>
+<PRE>
+module Slp {
+
+ real = (int mantissa, int exp)
+...
+  exp = Id(identifier id)
+      | Num(int v)
+      | Op(exp lexp,binop?,exp rexp)
+       attributes (real? value) 
+...
+
+}
+
+view C {
+
+-- represent reals as a double
+
+  Slp.exp &lt;= {
+   natural_type : my_real
+   wrapper      : real2my_real
+   unwrapper    : my_real2real
+  }
+  
+  module Slp &lt;= {
+  interface_epilogue : typedef double my_real_ty
+  
+  implementation_prologue
+%%
+  my_real_ty real2my_real(Slp_real_ty x) {
+    /* hairy code to actually do this */
+  }
+
+  Slp_real_ty my_real2real(my_real_ty x) {
+    /* hairy code to actually do this */
+  }
+%% 
+  } 
+}
+
+view SML {
+   -- unpickle exp trees as a mutable type
+    Slp.exp &lt;= {
+       natural_type_con : ref
+       wrapper          : !
+       unwrapper        : ref
+    }
+
+}
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>
+<P>
+<P>
+<P>
+<P>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="manual-6.html">Next</A>
+<A HREF="manual-4.html">Previous</A>
+<A HREF="manual.html#toc5">Contents</A>
+</BODY>
+</HTML>

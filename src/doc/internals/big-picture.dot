@@ -1,0 +1,77 @@
+digraph G {
+graph [size="6,8",ratio="fill"];
+node [fontname = "Helvetica",fontsize="18"];
+/* signatures */
+node [fontname = "Courier", shape = "plaintext" ]; 
+ semant_sig [label="signature SEMANT"];
+ code_pp [label="signature CODE_PP"];
+
+ algebraic_ast [label="type output =\l   AlgebraicAst.module list"];
+ algol_ast     [label="type output =\l   AlgolAst.module list"];
+ oo_ast        [label="type output =\l   OOAst.module list"];
+
+translate_sig [label="signature TRANSLATE\l where ..."];
+ format_ast  [label="type output =\l  FormatAst.module list"];
+/* xml_dtd_ast [label="type output =\l  XMLDTDAst.module list"];
+*/
+semant_translate_sig [label="signature SEMANT_TRANSLATOR"];
+/* functors */
+node [fontname = "Helvetica", shape = "diamond" ]; 
+
+ source_pp [label="functor\nmkSourceFileTranslate\n"];
+ translate [label="functor\nmkTranslateFromTranslator\n"];
+ translate_algebraic [label="functor\nmkAlgebraicSemantTranslator\n"];
+ translate_algol [label="functor\nmkAlgolSemantTranslator\n"];
+ translate_oo [label="functor\nmkOOSemantTranslator\n"];
+
+node [fontname = "Helvetica", shape = "box" ]; 
+/* structs */
+  semant [label="structure  Semant"];
+
+  translate_format [label="structure FormatTranslator"];
+/*  translate_xml_dtd [label="structure XMLDTDTranslator"]; */
+
+node [shape = "box"];
+ml_pp [label="structure MLPP"];
+haskell_pp [label="structure HaskellPP"];
+java_pp [label="structure JavaPP"];
+c_plus_plus_pp [label="structure CPlusPlusPP"];
+node [shape = "box"];
+ansic_pp [label="structure AnsicPP"];
+html_pp [label="structure HTMLPP"];
+/*xml_dtd_pp [label="structure XMLDTDPP"]; */
+
+
+semant -> semant_sig 
+semant_sig -> translate_algebraic ->  semant_translate_sig
+semant_sig -> translate_oo  ->   semant_translate_sig
+semant_sig -> translate_algol ->  semant_translate_sig
+semant_sig -> translate_format   ->   semant_translate_sig 
+/*semant_sig -> translate_xml_dtd   -> semant_translate_sig */
+
+
+semant_translate_sig -> translate -> translate_sig
+translate_sig -> algebraic_ast 
+translate_sig -> oo_ast
+translate_sig -> algol_ast 
+translate_sig -> format_ast 
+/*translate_sig -> xml_dtd_ast */
+
+algebraic_ast -> ml_pp 
+algebraic_ast -> haskell_pp 
+oo_ast -> java_pp 
+oo_ast -> c_plus_plus_pp
+algol_ast  -> ansic_pp
+format_ast -> html_pp
+/*xml_dtd_ast -> xml_dtd_pp */
+
+ml_pp -> code_pp
+haskell_pp -> code_pp
+ansic_pp -> code_pp
+java_pp -> code_pp
+c_plus_plus_pp -> code_pp
+html_pp -> code_pp
+/*xml_dtd_pp ->  code_pp*/
+
+code_pp -> source_pp
+}

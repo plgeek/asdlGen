@@ -1,0 +1,9 @@
+module Exp (imports Pos
+            imports Ops) {
+
+exp = Id(identifier id)
+    | Num(int v)
+    | Op(exp lexp, Ops.binop? op, exp rexp)
+     attributes (Pos.pos p,int? value)	
+
+}

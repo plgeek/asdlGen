@@ -1,0 +1,501 @@
+
+module zsuif {
+-- hacked
+suif_int = (int)
+lstring  = (identifier)
+
+
+-- Zephyr SUIF a simplified interface for SUIF 2.0
+
+constant = ConstInt(suif_int)
+         | ConstString(string)
+         | ConstBits(string)
+
+source_op =
+           SrcVar(variable_symbol var)
+         | SrcReg(register_symbol reg, type type)
+         | SrcDst(instruction instr, nat op_num)
+          
+destination_op = 
+           DstTmp -- unnamed destination 
+         | DstVar(variable_symbol var)
+         | DstReg(register_symbol reg, type type)
+         | DstSrc(instruction instr, nat op_num)
+
+int_or_source_op = Int(suif_int)
+                 | SrcOp(source_op)
+
+symbol = (nat uid, identifier name)
+
+-- reorganized type hierarchy 
+type_id  = (nat)
+
+type = Data(data_type)
+     | Procedure(procedure_type)
+     | Qualified(qualification* qualifications, type type)
+     | Void 
+
+procedure_type = 
+    Basic_procedure_type(type result_type, type* args)
+
+    attributes(int_or_source_op? bit_size,
+               int_or_source_op? bit_alignment)
+
+data_type =
+     Boolean_type 
+   | Integer_type  
+   | UInteger_type 
+   | Floating_point_type
+   | Enumerated_type(string name, enumerate_case* cases)
+   | Pointer_type(type_id reference_type)
+   | Array_type 
+     (type element_type, 
+      int_or_source_op lower_bound,
+      int_or_source_op upper_bound)
+   | Group_type(string name, group_field* fields)
+   | Lookup_type(type_id)
+
+   attributes(int_or_source_op? bit_size, 
+              int_or_source_op? bit_alignment)
+
+group_field    = (field_symbol name, type type, int_or_source_op bit_offset)
+enumerate_case = (string name, suif_int case_constant)
+qualification  = (string qualifier)
+
+type_table_entry = (type_id key, type)
+type_table       = (type_table_entry* entries)
+
+code_label_symbol = (symbol)
+procedure_symbol  = (symbol)
+register_symbol   = (symbol)
+variable_symbol   = (symbol)
+field_symbol      = (symbol)
+parameter_symbol  = (symbol)
+
+symbol_table_entry = 
+       CodeLabelEntry
+     | ProcedureEntry(procedure_definition def)
+     | RegisterEntry(suif_int size)
+     | VariableEntry(variable_definition def)
+     | ParameterEntry(parameter_symbol name,
+                      int_or_source_op bit_alignment,
+                      type type, procedure_symbol proc)
+     | FieldEntry(int_or_source_op bit_offset)
+     | NestedVariable(variable_symbol start, int_or_source_op bit_offset)
+     attributes (symbol key, bool address_taken)
+
+symbol_table = (symbol_table_entry* entries)
+
+procedure_definition =
+  (procedure_symbol name,
+   qualification* qualifications, 
+   procedure_type procedure_type,
+   parameter_symbol* params,
+   statement body)
+
+variable_definition = (variable_symbol name,
+                       type type,
+                       int_or_source_op bit_alignment,
+                       value_block value_block)
+
+value_block = 
+    Constant_value_block(constant constnat)
+  | Expression_value_block(source_op expression)
+  | Multi_value_block(multi_value_block_init* inits)
+  | Repeat_value_block(suif_int count, value_block block) 
+  | Undefined_value_block
+  attributes(data_type data_type)
+
+definition_block = 
+  (variable_symbol*  defined_variables,
+   procedure_symbol* defined_procedures)
+
+file_block = 
+  (string source_file_name, definition_block definition_block)
+
+file_set_block = 
+  (file_block* file_blocks,
+   type_table type_table,
+   symbol_table symbol_table,
+   symbol_table extern_symbol_table,
+   global_information_block information_block)
+
+statement =
+  Eval_statement -- order of evaluation undefined 
+     (instruction* instructions)
+
+ | Sequence_statement -- sequential semantics
+     (statement* statements)
+
+ | If_statement
+     (source_op condition, 
+      statement then_part,
+      statement else_part)
+
+ | While_statement 
+     (source_op condition, statement body,
+      code_label_symbol? break_label,
+      code_label_symbol? continue_label)
+
+ | Do_while_statement 
+     (source_op condition, statement body,
+      code_label_symbol? break_label,
+      code_label_symbol? continue_label)
+
+ | For_statement 
+     (variable_symbol index, 
+      source_op lower_bound,
+      source_op upper_bound, 
+      source_op step,
+      lstring init_comparison_opcode, 
+      statement body,
+      statement? pre_pad, 
+      statement? post_pad,
+      code_label_symbol? break_label,
+      code_label_symbol? continue_label)
+
+ | Scope_statement 
+     (statement body, definition_block definition_block)
+
+ | Mark_statement -- possibly redundant
+
+ | Va_start_statement      
+     (source_op ap_address, parameter_symbol parmn)
+
+ | Va_start_old_statement  
+     (source_op ap_address)
+
+ | Va_end_statement        
+     (source_op ap_address)
+
+ | Store_statement         
+     (source_op data_operand, 
+      source_op destination_address)
+
+ | Return_statement        
+     (source_op* return_values)
+
+ | Jump_statement          
+     (code_label_symbol target)
+
+ | Jump_indirect_statement 
+     (source_op itarget)
+
+ | Branch_statement        
+     (lstring opcode, 
+      source_op decision_operand,
+      code_label_symbol target)
+
+ | Multi_way_branch_statement 
+     (source_op decision_operand,
+      code_label_symbol default_target,
+      multi_way_branch_case* cases)
+
+ | Label_location_statement (code_label_symbol defined_label)
+ | Assert_statement(source_op asserted_value) 
+
+--  attributes(?? )
+
+
+-- all instructions have at least one dest op listed in the attributes code
+
+instruction =
+   Binary_arithmetic_instruction
+           (lstring opcode, 
+            source_op source1,
+            source_op source2,
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Unary_arithmetic_instruction
+	   (lstring opcode, 
+            source_op source,            
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Copy_instruction
+           (source_op source,            
+            data_type result_type, 
+            destination_op destination_op,
+	    destination_op* destination_ops)
+ 
+ | Select_instruction 
+           (source_op selector, 
+            source_op selection1,
+            source_op selection2,            
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Array_reference_instruction
+           (source_op base_array_address,
+            source_op index,            
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Field_access_instruction
+           (source_op base_group_address,
+            field_symbol field,            
+            data_type result_type, 
+	    destination_op destination_op)
+ 
+ | Extract_fields_instruction 
+           (source_op base_group_op,            
+            field_dst  field_dst,
+	    field_dst* field_dsts)
+
+ | Set_fields_instruction 
+	   (source_op base_group_op,
+            field_src  field_src,
+	    field_src* field_srcs,            
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Extract_elements_instruction 
+	   (source_op index,
+            source_op base_array_op,           
+            element_dst  element_dst,
+            element_dst* element_dsts)
+
+ | Set_elements_instruction 
+           (source_op base_array_op,
+	    element_src  element_src,
+            element_src* element_srcs)
+
+ | Bit_size_of_instruction
+           (type_id ref_type,            
+            data_type   result_type, 
+	    destination_op destination_op)
+
+ | Bit_alignment_of_instruction
+           (type_id ref_type,            
+            data_type result_type, 
+	    destination_op destination_op)
+
+ | Bit_offset_of_instruction
+            (field_symbol field,            
+             data_type result_type, 
+	     destination_op destination_op)
+
+-- add bit to byte coercions and avoid these 
+ | Byte_size_of_instruction
+            (type_id ref_type,            
+             data_type result_type, 
+	     destination_op destination_op)
+ 
+ | Byte_alignment_of_instruction
+            (type_id ref_type,            
+             data_type result_type, 
+	     destination_op destination_op)
+
+ | Byte_offset_of_instruction
+            (field_symbol field,            
+             data_type result_type, 
+	     destination_op destination_op)
+
+ | Va_arg_instruction
+            (source_op ap_address,
+             data_type result_type, 
+	     destination_op destination_op)
+
+ | Sc_and_instruction 
+            (source_op source1, 
+             source_op source2,
+             data_type result_type, 
+	     destination_op destination_op)
+
+ | Sc_or_instruction 
+             (source_op source1, 
+              source_op source2,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Sc_select_instruction 
+             (source_op selector, 
+              source_op selection1,
+              source_op selection2,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Load_instruction 
+             (source_op source_address,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Load_address_instruction 
+             (symbol addressed_symbol,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Load_constant_instruction
+             (constant constant,              
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Load_value_block_instruction 
+             (constant constant,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Call_instruction 
+             (source_op callee_address,
+              source_op* arguments, 	        
+	      return_value return_value,
+	      return_value* return_values)
+
+ | Ssa_phi_instruction 
+             (variable_symbol* variables,
+              data_type result_type, 
+	      destination_op destination_op)
+
+ | Mark_instruction 
+
+-- redundant use statement versions
+-- | Va_start_instruction(source_op ap_address, parameter_symbol parmn)
+-- | Va_start_old_instruction(source_op ap_address)
+-- | Va_end_instruction(source_op ap_address)
+-- | Store_instruction(source_op data_operand, source_op destination_address)
+-- | Return_instruction(source_op* return_values)
+-- | Jump_instruction(code_label_symbol target) 
+-- | Jump_indirect_instruction(source_op target)
+-- | Branch_instruction(lstring opcode, 
+--              source_op decision_operand,
+--              code_label_symbol target)
+-- | Multi_way_branch_instruction(source_op decision_operand,
+--              code_label_symbol default_target,
+--              multi_way_branch_case* cases)
+-- | Label_location_instruction(code_label_symbol defined_label)
+-- | Assert_instruction(source_op asserted_value)
+--
+
+-- attributes( )
+
+ element_dst = (data_type result_type,
+                destination_op destination_op,
+                source_op index)
+
+ element_src = (source_op index, source_op element)
+
+ field_dst = (data_type result_type,
+              destination_op destination_op, 
+              field_symbol field)
+
+ field_src  = (field_symbol field,  source_op source_op)
+ 
+ return_value  = (destination_op destination_op, 
+                  data_type result_type)
+
+ multi_way_branch_case = (constant case_constant,
+                          code_label_symbol case_target)
+
+
+multi_value_block_init = (suif_int bit_offset, value_block block)
+
+-- just stubbed out for now 
+global_information_block = C_information_block 
+
+
+}
+
+view Doc { 
+
+<= doc_string { 
+module zsuif 
+%%
+<p> A simplified interface to SUIF, designed for frontend and backend
+interfaces into the main SUIF infrastructure. It's not designed to be
+used as an optimization framework. This interface differs 
+from the actual C++ implementation, but tries to preserver the
+underlying semantics of the original C++ interface. This currently
+only supports core SUIF and not any of the extensibility infrastructure. 
+
+<p> Significant differences between the original SUIF an the
+simplified version are described below. There's been some effort put
+into keeping many of the same names found in the original SUIF
+definition. This interface diverges primary to it's handling of symbols
+and scope resolution.
+
+%%
+-- zsuif.type           
+--  zsuif.type_table_entry       : TypeTableEntry 
+--  zsuif.type_table             : TypeTable       
+--  zsuif.parameter_symbol       : ParameterSymbol  
+  zsuif.symbol %%
+A symbol is a unique id followed by a non-unqiue printable name. 
+%%
+
+  zsuif.symbol_table 
+%% 
+<p> In The original C++ version of SUIF, each scope contained a
+separate symbol table of objects defined in that scope. In our
+interface there is one symbol table per file-set. Scopes have been
+resolved and all symbols are unique. To preserve the scope information
+found in the original C++ versions this interface remembers
+where a symbol definition introduced.
+%%
+  zsuif.statement
+%%
+Statements describe the flow control semantics of the program.
+%%
+  zsuif.instruction           
+%%
+Instructions preform computation and can be either dags or trees.
+%%
+
+zsuif.source_op 
+%%
+Locations where values can be read from
+%%
+
+}
+
+}
+
+view Java {
+
+-- remap names in java
+<= source_name {
+  zsuif.suif_int               : SuifInt 
+  zsuif.lstring                : Lstring 
+  zsuif.constant               : Constant 
+  zsuif.source_op              : SourceOp 
+  zsuif.destination_op         : DestinationOp 
+  zsuif.int_or_source_op       : IntOrSourceOp
+  zsuif.symbol                 : Symbol  
+  zsuif.type_id                : TypeId  
+  zsuif.type                   : Type 
+  zsuif.procedure_type         : ProcedureType 
+  zsuif.data_type              : DataType 
+  zsuif.group_field            : GroupField    
+  zsuif.enumerate_case         : EnumerateCase 
+  zsuif.qualification          : Qualification  
+  zsuif.type_table_entry       : TypeTableEntry 
+  zsuif.type_table             : TypeTable       
+  zsuif.code_label_symbol      : CodeLabelSymbol 
+  zsuif.procedure_symbol       : ProcedureSymbol  
+  zsuif.register_symbol        : RegisterSymbol   
+  zsuif.variable_symbol        : VariableSymbol   
+  zsuif.field_symbol           : FieldSymbol      
+  zsuif.parameter_symbol       : ParameterSymbol  
+  zsuif.symbol_table_entry     : SymbolTableEntry 
+  zsuif.symbol_table           : SymbolTable 
+  zsuif.procedure_definition   : ProcedureDefinition 
+  zsuif.variable_definition    : VariableDefinition 
+  zsuif.value_block            : ValueBlock 
+  zsuif.definition_block       : DefinitionBlock 
+  zsuif.file_block             : FileBlock 
+  zsuif.file_set_block         : FileSetBlock 
+  zsuif.statement              : Statement 
+  zsuif.instruction            : Instruction 
+  zsuif.element_dst            : ElementDst 
+  zsuif.element_src            : ElementSrc 
+  zsuif.field_dst              : FieldDst 
+  zsuif.field_src              : FieldSrc  
+  zsuif.return_value           : ReturnValue  
+  zsuif.multi_way_branch_case  : MultiWayBranchCase 
+  zsuif.multi_value_block_init : MultiValueBlockInit 
+ }
+
+}
+
+
+

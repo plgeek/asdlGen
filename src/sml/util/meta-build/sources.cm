@@ -1,0 +1,24 @@
+Group is
+smlnj-lib.cm
+../misc/sources.cm
+../os/sources.cm
+meta-build.sig
+build-it.sig
+
+
+meta-build.sml
+build-run.sml
+build-export.sml
+build-util.sml
+
+
+unix-build.sml
+win32-build.sml
+config-build.sml
+
+test-build.sml
+cc-depends.sml
+
+cc-build.sml
+sml-build.sml
+file-ops-build.sml

@@ -1,0 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>INSTALL notes for asdlGen version 2.0-beta</TITLE>
+
+
+</HEAD>
+<BODY>
+<H1>INSTALL notes for <CODE>asdlGen</CODE> version 2.0-beta</H1>
+
+<H2>Daniel C. Wang</H2>February 14, 2000<P> In order of build and install <CODE>asdlGen</CODE> you must have SML/NJ version
+110.0.6 installed. SML/NJ is available for both Unix and Win32. <CODE>asdlGen</CODE>
+should build easily on a unix box with SML/NJ installed. On a Win32 box it
+should also build if you have the Cygwin environment installed, but can be
+built manually if need be. (Note: I haven't tested the build on Win32).
+<P>See 
+<A HREF="http://cm.bell-labs.com/cm/cs/what/smlnj/index.html">http://cm.bell-labs.com/cm/cs/what/smlnj/index.html</A> for
+information on obtaining and installing SML/NJ.
+<P>See 
+<A HREF="http://sourceware.cygnus.com/cygwin/">http://sourceware.cygnus.com/cygwin/</A> for information on
+obtaining and installing Cygwin.
+<P>The only <CODE>make</CODE> file of any interest is the toplevel
+one. It calls SML to build the system. The ML code determines certain
+useful pieces of information about the current system  using <CODE>GNU autoconf</CODE>.
+<HR>
+<PRE>
+% ./configure --prefix=&lt;install-prefix>
+% make all
+</PRE>
+<HR>
+</BODY>
+</HTML>

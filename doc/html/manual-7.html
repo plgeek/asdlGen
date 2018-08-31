@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>asdlGen Reference Manual: Support Code</TITLE>
+ <LINK HREF="manual-6.html" REL=previous>
+ <LINK HREF="manual.html#toc7" REL=contents>
+</HEAD>
+<BODY>
+Next
+<A HREF="manual-6.html">Previous</A>
+<A HREF="manual.html#toc7">Contents</A>
+<HR>
+<H2><A NAME="sect.support-code"></A> <A NAME="s7">7. Support Code</A></H2>
+
+<P><EM> Needs some more fleshing out</EM>
+This section lists the primitive functions and types that are required for
+the code produced by <CODE>asdlGen</CODE> to correctly compile. Note this is a language
+independent presentation. 
+<P>
+<H2><A NAME="ss7.1">7.1 Required for All Languages</A>
+</H2>
+
+<P>All languages require the following
+<DL>
+<DT><B>instream outstream</B><DD><P>The input and output stream that the reader and
+writer functions expect.
+<P>
+<DT><B>int</B><DD><P>The type of integers, possibly a "bignum" type.
+<P>
+<DT><B>string</B><DD><P>The type of strings
+<P>
+<DT><B>identifier</B><DD><P>The type of identifiers
+<P>
+<DT><B>read_tag write_tag</B><DD><P>Read and write a constructor and length 
+tags out in ASDL integer format. Both should use the languages 
+standard integer types rather than a "bignum" types.
+<P>
+<DT><B>read_int write_int</B><DD><P>Read and write the <B>int</B> type out in ASDL integer format.
+<P>
+<DT><B>read_string write_string</B><DD><P>Read and write the <B>string</B> type out in the ASDL string format.
+<P>
+<DT><B>read_identifier write_identifier</B><DD><P>Read and write the <B>identifier</B> type out in the ASDL identifier format.
+<DT><B>die</B><DD><P>Signal a fatal error.
+</DL>
+<P>
+<H2><A NAME="ss7.2">7.2 BigNums</A>
+</H2>
+
+<P> C and SML have libraries that use a bignum type
+rather than the a fixnum for the ASDL int type. To have the int type
+be a bignum in C use the flag <CODE>--base_include cii_big_base.h</CODE>. In
+SML the flags are <CODE>--base_signature BIG_BASE</CODE> and
+<CODE>--base_structure BigBase</CODE>.
+<P>
+<H2><A NAME="ss7.3">7.3 Lists and Options</A>
+</H2>
+
+<P>For code that does not use polymorphic list and option the following extra
+types are needed along with the corresponding read and write functions
+<DL>
+<DT><B>int_list int_option</B><DD><P>The list and option types for integers.
+<DT><B>string_list string_option</B><DD><P>The list an option types for strings.
+<DT><B>identifier_list identifier_option</B><DD><P>The list an option types for 
+identifiers.
+</DL>
+<P>For code that supports polymorphic list and options the following extra
+functions are required
+<P>
+<DL>
+<DT><B>read_list write_list</B><DD><P>Functions whose first argument is a read or write
+function for a specific type that reads or writes a list of that type.
+<DT><B>read_option write_option</B><DD><P>Functions whose first argument is a read or write
+function for a specific type that reads or writes a option of that type.
+</DL>
+<P>
+<H2><A NAME="ss7.4">7.4 Note about <CODE>--mono_types=false</CODE> for C</A>
+</H2>
+
+<P>For the <CODE>--mono_types false</CODE> option in C these function expect functions
+pointers that correspond to the following C <CODE>typedefs</CODE>
+<BLOCKQUOTE><CODE>
+<PRE>
+typedef void *(*generic_reader_ty)(instream_ty s);
+typedef void (*generic_writer_ty)(void *x,outstream_ty s);
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>Function pointer with different argument types are distinct types in C that
+can not be safely cast between because they may differ in calling
+conventions. <CODE>asdlGen</CODE> solves this problem by automatically generating
+function stubs that internally cast the <CODE>void*</CODE> pointers for each option
+and list type. These reader and writer functions are prefixed
+<CODE>generic_</CODE>. There also should be <CODE>list_ty</CODE> and <CODE>opt_ty</CODE> typedefs.
+<P>
+<P>
+<HR>
+Next
+<A HREF="manual-6.html">Previous</A>
+<A HREF="manual.html#toc7">Contents</A>
+</BODY>
+</HTML>

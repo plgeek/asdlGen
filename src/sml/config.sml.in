@@ -1,0 +1,9 @@
+(* @configure_input@ *)
+structure ConfigPaths =
+ struct	
+   val srcdir = "@srcdir@"
+   val top_srcdir = "@top_srcdir@"
+   val prefix = "@prefix@"
+   val version = "@ASDLGEN_VERSION@"
+ end	
+(*EOF*)

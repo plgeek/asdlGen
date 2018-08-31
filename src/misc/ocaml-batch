@@ -1,0 +1,25 @@
+#! /bin/sh
+# gross hack to make compiling ocaml a bit more transparent
+flags=$1
+shift
+arg=$@
+targets=`echo $@ | sed -e s/\.mli/\.cmi/g | sed -e s/\.ml/\.cmo/g`
+echo "TARGETS:$targets"
+mkfile=makefile$$
+echo "all: ${targets}" > ${mkfile}
+cat >> ${mkfile} <<EOF
+# Common rules
+OCAMLC=ocamlc
+.SUFFIXES: .ml .mli .cmo .cmi .cmx
+
+.ml.cmo:
+	\$(OCAMLC) $flags -c \$<
+
+.mli.cmi:
+	\$(OCAMLC) $flags -c \$<
+EOF
+ocamldep ${flags} $@ >> ${mkfile}
+make -f ${mkfile} all
+ret=$?
+rm -rf ${mkfile}
+exit $ret

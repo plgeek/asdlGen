@@ -1,0 +1,28 @@
+<HTML>
+<HEAD>
+<TITLE>Description for Module Asdl</TITLE>
+<BODY>
+<H1>Description for Module Asdl</H1>
+<H2>Locally defined types</H2>
+<dl><dt><em>field</em>
+      <dd><b>Id</b>  <BR> | <b>Option</b>  <BR> | <b>Sequence</b>  <BR>
+      attributes ( <em>identifier *</em> , <em>identifier ?</em> )
+  <dt><em>constructor</em>
+    <dd><b>Con</b> ( <em>identifier</em> , <em>field *</em> ) <BR>
+  <dt><em>asdl_type</em>
+    <dd><b>SumType</b> ( <em>field *</em> , <em>constructor</em> ,
+    <em>constructor *</em> ) <BR> | <b>ProductType</b> ( <em>field</em> ,
+    <em>field *</em> ) <BR> attributes ( <em>identifier</em> )
+  <dt><em>asdl_module</em>
+    <dd>( <em>identifier</em> name , <em>identifier *</em> imports ,
+    <em>asdl_type *</em> defs )
+  </dl>
+<H2>Types used as options</H2>
+<ul></ul>
+<H2>Types used as sequences</H2>
+<ul><li><em>Asdl.asdl_type</em> 
+  <li><em>Asdl.field</em> 
+  <li><em>Asdl.constructor</em> 
+  </ul>
+</BODY>
+</HTML>

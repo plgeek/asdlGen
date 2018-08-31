@@ -1,0 +1,74 @@
+<label id="sect.support-code"><p>
+<em/ Needs some more fleshing out/
+This section lists the primitive functions and types that are required for
+the code produced by &asdlGen; to correctly compile. Note this is a language
+independent presentation. 
+
+<sect1>Required for All Languages<p>
+All languages require the following
+<descrip>
+<tag/instream outstream/ The input and output stream that the reader and
+writer functions expect.
+
+<tag/int/ The type of integers, possibly a "bignum" type.
+
+<tag/string/ The type of strings
+
+<tag/identifier/ The type of identifiers
+
+<tag/read_tag write_tag/ Read and write a constructor and length 
+tags out in ASDL integer format. Both should use the languages 
+standard integer types rather than a "bignum" types.
+
+<tag/read_int write_int/
+Read and write the <bf/int/ type out in ASDL integer format.
+
+<tag/read_string write_string/
+Read and write the <bf/string/ type out in the ASDL string format.
+
+<tag/read_identifier write_identifier/
+Read and write the <bf/identifier/ type out in the ASDL identifier format.
+<tag/die/ Signal a fatal error.
+</descrip>
+
+<sect1>BigNums<p> C and SML have libraries that use a bignum type
+rather than the a fixnum for the ASDL int type. To have the int type
+be a bignum in C use the flag <tt/--base_include cii_big_base.h/. In
+SML the flags are <tt/--base_signature BIG_BASE/ and
+<tt/--base_structure BigBase/.
+
+<sect1>Lists and Options<p>
+For code that does not use polymorphic list and option the following extra
+types are needed along with the corresponding read and write functions
+<descrip>
+<tag/int_list int_option/ The list and option types for integers.
+<tag/string_list string_option/ The list an option types for strings.
+<tag/identifier_list identifier_option/ The list an option types for 
+                                        identifiers.
+</descrip>
+
+For code that supports polymorphic list and options the following extra
+functions are required
+
+<descrip>
+<tag/read_list write_list/ Functions whose first argument is a read or write
+function for a specific type that reads or writes a list of that type.
+<tag/read_option write_option/
+Functions whose first argument is a read or write
+function for a specific type that reads or writes a option of that type.
+</descrip>
+
+<sect1>Note about <tt/--mono_types=false/ for C<p>
+For the <tt/--mono_types false/ option in C these function expect functions
+pointers that correspond to the following C <tt/typedefs/
+<tscreen><verb>
+typedef void *(*generic_reader_ty)(instream_ty s);
+typedef void (*generic_writer_ty)(void *x,outstream_ty s);
+</verb></tscreen>
+
+Function pointer with different argument types are distinct types in C that
+can not be safely cast between because they may differ in calling
+conventions. &asdlGen; solves this problem by automatically generating
+function stubs that internally cast the <tt/void*/ pointers for each option
+and list type. These reader and writer functions are prefixed
+<tt/generic_/. There also should be <tt/list_ty/ and <tt/opt_ty/ typedefs.

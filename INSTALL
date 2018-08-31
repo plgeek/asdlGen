@@ -1,0 +1,66 @@
+  INSTALL notes for asdlGen version 2.0-beta
+  Daniel C. Wang
+  February 14, 2000
+
+  In order of build and install asdlGen you must have SML/NJ version
+  110.0.6 installed. SML/NJ is available for both Unix and Win32.
+  asdlGen should build easily on a unix box with SML/NJ installed. On a
+  Win32 box it should also build if you have the Cygwin environment
+  installed, but can be built manually if need be. (Note: I haven't
+  tested the build on Win32).
+
+  See http://cm.bell-labs.com/cm/cs/what/smlnj/index.html for
+  information on obtaining and installing SML/NJ.
+
+  See http://sourceware.cygnus.com/cygwin/ for information on obtaining
+  and installing Cygwin.
+
+  The only make file of any interest is the toplevel one. It calls SML
+  to build the system. The ML code determines certain useful pieces of
+  information about the current system  using GNU autoconf.
+
+  ______________________________________________________________________
+  % ./configure --prefix=<install-prefix>
+  % make all
+  ______________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

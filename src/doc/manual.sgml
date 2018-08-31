@@ -1,0 +1,39 @@
+<!doctype linuxdoc system [   
+<!entity % decls.common system "ldoc/common-decls.ldoc">
+  %decls.common;
+]>
+
+<article>
+<title>&asdlGen; Reference Manual
+<author>&author.danwang;
+<date>&doc.version; &doc.date;
+
+<toc>
+
+<sect>Introduction
+&sect.introduction;
+
+<sect>Invocation
+&sect.invocation;
+
+<!-- <sect>Tutorial
+&sect.tutorial;
+-->
+
+<sect>Input Syntax
+&sect.syntax;
+
+<sect>Using the Code Produced
+&sect.code-interface;
+
+<sect>Views
+&sect.views;
+
+<sect>Pickles
+&sect.pickles;
+
+<sect>Support Code
+&sect.support-code;
+
+
+</article>

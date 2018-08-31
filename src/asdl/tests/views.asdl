@@ -1,0 +1,171 @@
+
+module Slp {
+
+-- Straight Line Programs from MC
+-- With user defined field names
+-- With sequence
+-- With raw products, atributes and options
+
+pos = (string? file,int line, int offset)
+
+stm = Compound(stm head,stm next)
+    | Assign(identifier id,exp exp) 
+    | Print(exp*)
+     attributes (pos p,int? value)
+
+-- Values are optional so that a parser can ignore them
+-- but an evaluator can use them to record the value of each
+-- sub-expression
+
+exp = Id(identifier id)
+    | Num(int v)
+    | Op(exp lexp,binop?,exp rexp)
+     attributes (pos p,int? value)	
+
+binop = Plus | Minus | Times | Div
+
+}
+
+-- view C {
+view bogus {
+  Slp.pos <= {
+    natural_type : StdPrims.int
+    unwrapper    : User.pos2int
+    wrapper      : User.int2pos
+    user_init    : User.pos_init
+  }
+
+  Slp.exp <= {
+   reader    : User.exp_reader
+   writer    : User.exp_writer
+   user_init : User.exp_init
+  }
+
+  module Slp <= interface_epilogue 
+%%
+  int User_pos2int(Slp_pos_ty s);
+  int_ty User_pos_reader(instream_ty);
+  Slp_pos_ty User_pos_init(Slp_pos_ty);
+  void User_pos_writer(int ,outstream_ty);
+
+  Slp_exp_ty User_exp_reader(instream_ty);
+  Slp_exp_ty User_exp_init(Slp_exp_ty);
+  void User_exp_writer(Slp_exp_ty,outstream_ty);
+%%
+
+}
+
+
+view Cxx {
+
+  Slp.pos <= {
+    natural_type : int
+    unwrapper    : User.pos2int
+    wrapper      : User.int2pos
+    reader       : User.pos_reader
+    writer       : User.pos_writer
+    user_init    : User.pos_init
+  }
+
+  Slp.exp <= {
+   reader    : User.exp_reader
+   writer    : User.exp_writer
+   user_init : User.exp_init
+  }
+
+  module Slp <= interface_epilogue 
+%%
+     
+  int User_pos2int(Slp_pos* s);
+  Slp_pos* User_int2pos(int s);
+
+  Slp_pos* User_pos_init(Slp_pos);
+  int User_pos_reader(instream);
+  void User_pos_writer(int, outstream);
+
+  Slp_exp* User_exp_reader(instream);
+  Slp_exp* User_exp_init(Slp_exp*);
+  void User_exp_writer(Slp_exp*,outstream);
+%%
+
+}
+
+view Java {
+Slp.exp <= source_name : Expression
+
+  Slp.pos <= {
+    natural_type : java_int
+    unwrapper    : pos2int
+    wrapper      : int2pos
+    reader       : pos_reader
+    writer       : pos_writer
+    user_init    : pos_init
+  }
+  Slo.binop <= base_class : Object
+  Slp.exp <= {
+   base_class: Object
+   reader    : exp_reader
+   writer    : exp_writer
+   user_init : exp_init
+  }
+
+  module Slp <= implementation_prologue 
+%%
+import java.io.*;
+%%
+
+  module Slp <= implementation_epilogue
+%%
+ static  int pos2int(pos s){ return 0; }
+ static  pos int2pos(int s){ return null; }
+
+ static  pos pos_init(pos x) { return x; }
+ static  int pos_reader(InputStream x) { return 0; }
+ static  void pos_writer(int x, OutputStream s) { }
+
+ static  Expression exp_reader(InputStream x){ return null; }
+ static  Expression exp_init(OutputStream x){ return null; }
+ static  void exp_writer(Expression x,OutputStream s) { }
+%%
+}
+
+view SML {
+
+    Slp.pos <= {
+       reader : User.pos_reader
+       writer : User.pos_writer
+    }
+
+    Slp.exp <= {
+natural_type_con: Ref
+       wrapper: mkRef
+     unwrapper: !	
+    }
+module Slp <= interface_prologue 
+%%
+type 'a Ref = 'a ref
+%%
+module Slp <= implementation_prologue 
+%%
+type 'a Ref = 'a ref
+val mkRef = ref
+structure User =
+   struct
+    fun pos_reader x = raise Fail ""
+    fun pos_writer x s = raise Fail ""
+    fun exp_reader x = raise  Fail ""
+    fun exp_writer x s = raise Fail ""
+end 
+%%
+
+
+
+}
+
+
+
+
+
+
+
+

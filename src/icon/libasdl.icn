@@ -1,0 +1,130 @@
+#######################################################################
+## Library libasdl
+## Contains
+##  StdPkl
+##  StdPrims
+#######################################################################
+# module StdPkl
+# should be replaced with ASDL binary format operators
+$define wrt StdPkl_write_tag
+$define rdt StdPkl_read_tag
+
+###########################
+#       Since ASDL integers are intended to be of infinite precision they
+#       are represented with a variable-length, signed-magnitude
+#       encoding. The eight bit of each byte indicates if a given byte is
+#       the last byte of the integer encoding. The seventh bit of the
+#       most significant byte is used to determine the sign of the
+#       value. Numbers in the range of -63 to 63 can be encoded in one
+#       byte. Numbers out of this range require an extra byte for every
+#       seven bits of precision needed. Bytes are written out in
+#       little-endian order. If most integer values tend to be values
+#       near zero, this encoding of integers may use less space than a
+#       fixed precision representation.
+###########################
+## tags i.e. write an integer out in the above format
+procedure StdPkl_write_tag(i,f) 
+   local t, b
+
+   t := abs(i)
+   while t > 63 do {
+      b := iand(t, 127)
+      writes(f, char(b))
+      t := ishift(t, -7)
+   }
+   b := t
+   if i < 0 then {
+      b := ior(t, 64)
+   }
+   b := ior(b, 128)
+   writes(f, char(b))
+end
+
+procedure StdPkl_read_tag(f) 
+   local v, b, s
+
+   v := 0
+   repeat {
+      b := ord(reads(f)) | runerr(500)
+      if iand(b, 128) ~= 0 then {
+         s := iand(b, 64)
+	 b := iand(b, 63)
+         v := ior(b, ishift(v, 6))
+	 if s > 0 then {
+	    v := -v
+	 }
+         return v
+      }
+      v := ior(b, ishift(v, 7))
+   }
+end
+
+### lists
+procedure StdPkl_write_list(wr,L,f) 
+   local len,elt
+   wrt(*L,f)
+   every wr(!L, f)
+end
+
+procedure StdPkl_read_list(rd,f) 
+   local len,L
+
+   len := rdt(f)
+   L := []
+
+   every 1 to len do {
+       put(L, rd(f))
+   }
+   return L
+end
+
+### options
+procedure StdPkl_write_option(wr,v,f) 
+    if /v then {
+       wrt(0,f)
+    } else {
+       wrt(1,f);
+       wr(v,f)
+    }
+end
+procedure StdPkl_read_option(rd,f) 
+return {
+    case (rdt(f)) of {
+	0 : return &null
+	1 : return (rd(f))
+  default : stop ("bad option tag")
+    }
+}
+end
+########################################################################
+#module StdPrims
+## int
+procedure StdPrims_write_int(i,f) 
+   wrt(i,f)
+end
+procedure StdPrims_read_int(f) 
+   return (rdt(f))
+end
+## string
+procedure StdPrims_write_string(s,f) 
+   wrt(*s,f)
+   writes(f,s)
+end
+procedure StdPrims_read_string(f) 
+  local len
+  len := rdt(f)
+  return reads(f,len)
+end
+
+procedure StdPrims_write_identifier(s,f) 
+   StdPrims_write_string(s,f)
+   return
+end
+procedure StdPrims_read_identifier(f) 
+   local s
+   static T
+   initial { T := table() }
+   s := StdPrims_read_string(f)
+   /T[s] := s
+   return T[s]
+end

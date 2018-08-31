@@ -1,0 +1,13 @@
+-- bug 4
+-- asdlGen fails to detect the following obvious error:
+-- fixed
+module bug4a {
+    exp = Foo(exp) | Foo(int)
+}
+
+-- This also occurs when I forget that "Nil" isn't anything special, e.g.,
+module bug4b {
+	exp = (int)
+	foo = Foo(exp,foo) | Nil
+	baz = Baz(exp,baz) | Nil
+}

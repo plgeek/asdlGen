@@ -1,0 +1,34 @@
+<label id="sect.tutorial"><p> 
+
+This section will introduce the important concepts behind ASDL and
+&asdlGen; through some informal examples. Section <ref
+id="sect.invocation" name="Invocation"> covers the details of invoking
+&asdlGen;. If &asdlGen; is not installed yet the interactive
+demonstration at <url url="&url.asdlGen.demo;"> can be used to step
+through the examples presented here.
+
+<tscreen><code>
+&code.slp-basic;
+
+
+</code></tscreen>
+
+<tscreen><code>
+&code.slp-sugar;
+</code></tscreen>
+
+<tscreen><code>
+&code.slp-products;
+</code></tscreen>
+
+<tscreen><code>
+&code.slp-attributes;
+</code></tscreen>
+
+<tscreen><code>
+&code.slp-modules;
+</code></tscreen>
+
+<tscreen><code>
+&code.slp-views;
+</code></tscreen>

@@ -1,0 +1,394 @@
+<label id="sect.syntax"><p>
+This section describes the syntax of the input language to &asdlGen;. The
+syntax is described using EBNF notation.  Literal terminals are enclosed by
+double quotes. Optional terms are enclosed in "<tt/[]/"'s. Terms which are
+repeated zero or more times are enclosed in "<tt/{}/"'s. The description is
+broken up in smaller subsection. Each subsection describes some fragment of
+the syntax and its meaning.
+
+<sect1>Lexical Tokens<p>
+<table loc="htp">
+<tabular ca="rcl">
+<em/upper/       | = |"<bf/A/" &verbar; ... &verbar; "<bf/Z/" @
+<em/lower/       | = |"<bf/a/" &verbar; ... &verbar; "<bf/z/" @
+<em/alpha/       | = |"<bf/&lowbar;/" &verbar; <em/upper/ &verbar; <em/lower/ @
+<em/alpha-num/   | = |<em/alpha/ &verbar; "<bf/0/" 
+                  &verbar; ... &verbar; "<bf/9/"@
+<em/typ-id/      | = |<em/lower/ {<em/alpha-num/} @
+<em/con-id/      | = |<em/upper/ {<em/alpha-num/} @
+<em/id/          | = |<em/typ-id/ &verbar; <em/con-id/ @
+</tabular>
+</table>
+
+Notice that identifiers for types, <em/typ-id/, are in a different
+lexical class from identifiers for constructors
+<em/con-id/. Constructor identifiers must start with one uppercase
+letter, while type identifiers must begin with one lowercase
+letter. All identifiers must begin with a letter.  Comments (not show
+in the above syntax) begin with "<tt/--/" and continue to the end of
+the line.
+
+<sect1>Module Syntax
+<p>
+<table loc="htp">
+<tabular ca="rcl">
+<em/module/      | = | "<bf/module/" <em/id/ &lsqb; <em/imports/ &rsqb; 
+	                "<bf/{/"   <em/definitions/  "<bf/}/" @
+<em/imports/     | = | "<bf/(/" { "<bf/imports/" <em/id/ } "<bf/)/" @
+</tabular>
+</table>
+
+An ASDL module declaration consists of the keyword "<bf/module/"
+followed by an identifier, an optional set of imported modules, and a
+sequence of type definitions enclosed in braces. For example the
+following example declares modules <tt/A/, <tt/B/, and <tt/C/. <tt/B/
+imports types from <tt/A/. <tt/C/ imports types from both <tt/A/ and
+<tt/B/. Imports cannot be recursive. It is an error for <tt/B/ to
+import <tt/C/, since <tt/C/ also imports <tt/B/.
+<tscreen><verb>
+ module A { ... } 
+ module B (imports A) { ... }
+ module C (imports A 
+           imports B) { ... }
+</verb></tscreen> 
+
+To refer to a type imported from another module the type must
+<em/always/ be qualified by the module name from which is
+imported. The following declares two different types called
+"<tt/t/". One in the <tt/A/ module and one in the <tt/B/ module. The
+type "<tt/t/" in the <tt/B/ module defines a type "<tt/t/" that
+recursively mentions itself and the type "<tt/t/" imported from the
+<tt/A/ module.
+<tscreen><verb>
+module A { t = ... } 
+module B (imports A) { t = T(A.t, t) | N  ... }
+</verb></tscreen> 
+
+<sect1>Type Definitions<p> 
+<table loc="htp">
+<tabular ca="rcl">
+<em/definitions/  | = | {<em/typ-id/ "<bf/=/" <em/type/} @
+<em/type/         | = | <em/sum-type/ &verbar;  <em/product-type/ @
+<em/product-type/ | = | <em/fields/ @
+<em/sum-type/     | = | <em/constructor/ {"<bf/&verbar;/" <em/constructor/} @
+                  |   |  &lsqb;"<bf/attributes/" <em/fields/&rsqb;  @
+<em/constructor/  | = | <em/con-id/ &lsqb;<em/fields/&rsqb; @
+<em/fields/       | = | "<bf/(/" { <em/field/  "<bf/,/" } <em/field/ "<bf/)/" @
+<em/field/        | = | &lsqb;id "<bf/./"&rsqb;<em/typ-id/ &lsqb;"<bf/?/" 
+                        &verbar; "<bf/*/"&rsqb; &lsqb;<em/id/&rsqb; @
+</tabular>
+</table>
+
+All type definitions occur within a module.  They begin with a type
+identifier which is the name of the type. The name must be unique within the
+module. The order of definitions is unimportant. When translating type
+definitions from a module they are placed in what would be considered a
+module, package, or name-space of the same name. If a output language does
+not support such features and only has one global name space the module name
+is used to prefix all the globally exported identifiers.
+
+Type definitions are either product types which are simple record definitions
+or sum type which represent a discriminated union of possible values. Unlike
+sum types, product types cannot form recursive type definitions, but they can
+contain recursively declared sum types.
+
+<sect2>Primitive Types<p> There are only three primitive types in ASDL. They
+are <tt/string/, <tt/int/, and <tt/identifier/. The <tt/string/ type
+represents length encoded strings of bytes. The <tt/int/ type represents
+arbitrary precision signed integers. The <tt/identifier/ type represents
+atomic printable names, which support fast equality testing, analogous to
+LISP symbols.
+
+<sect2>Product Types<p> 
+Product types are record or tuple declarations. They consist of a non-empty 
+sequence of fields separated by commas enclosed in parenthesis. For
+example 
+<tscreen><verb> 
+pair_of_ints = (int, int) 
+</verb></tscreen> 
+declares a new type <tt/pair_of_ints/ that consists of two integers.
+
+<sect2>Sum Types<p> 
+
+Sum types are the most useful types in ASDL. They provide concise notation
+used to describe a type that is the tagged union of a finite set of other
+types.  Sum types consists of a series of constructors separated by a
+vertical bar. Each constructor consist of a constructor identifier followed
+by an optional sequence of fields similar to a product type. 
+
+Constructor names must be unique within the module in which they are
+declared. Constructors can be viewed as functions who take some number of
+arguments of arbitrary type and create a value belonging to the sum type in
+which they are declared. For example
+<tscreen><verb>
+module M {
+  sexpr = Int(int)
+	| String(string)
+	| Symbol(identifier)
+	| Cons(sexpr, sexpr)
+	| Nil
+}
+</verb></tscreen>
+declares that values of type <tt/sexpr/ can either be constructed from an
+<tt/int/ using the <tt/Int/ constructor or a <tt/string/ from a <tt/String/
+constructor, an <tt/identifier/ using the <tt/Symbol/ constructor, or from
+two other <tt/sexpr/ using the <tt/Cons/ constructor, or from no arguments
+using the <tt/Nil/ constructor. Notice that the <tt/Cons/ constructor
+recursively refers to the <tt/sexpr/ type. ASDL allows sum types to be
+mutually recursive. Recursion however is limited to sum types defined within
+the same module.
+
+<sect3>The Rosetta Stone for Sum Types<label id="rosetta-stone">
+<p>
+In languages that have algebraic data types sum types are equivalent to the
+<tt/datatype/ and <tt/data/ declarations in ML and Haskell. In Algol like
+languages they are equivalent to tagged <tt/unions/ in C or variant records
+in Pascal. In class based object oriented languages sum types are equivalent
+to an abstract base class that represents the type of a family of subclasses
+one for each constructor of the type. The previous example written in ML would
+be
+<tscreen><verb>
+structure M =
+ struct
+  datatype sexpr = 
+           Int of (int)
+         | String of (string)
+         | Symbol of (identifier)
+         | Cons of (sexpr * sexpr)
+         | Nil
+ end
+</verb></tscreen>
+in C would be
+<tscreen><verb>
+typedef struct M_sexpr_s * M_sexpr_ty;
+struct M_sexpr_s { 
+ enum { M_Int_kind, M_String_kind, 
+        M_Symbol_kind, M_Cons_kind, M_Nil_kind }  kind;
+         union {
+	  struct M_Int_s    { int_ty  int1;             } M_Int;
+          struct M_String_s { string_ty string1;        } M_String;	 
+          struct M_Atom_s   { identifier_ty identifier1;} M_Atom;
+          struct M_Cons_s   { M_sexpr_ty; sexpr1 M_sexpr_ty sexpr2 }; M_Cons;
+         } v;
+}
+</verb></tscreen>
+and in Java would be
+<tscreen><verb>
+package ast.M;
+public abstract class sexpr {
+	 int kind;
+	 static final Int_kind        = 0;
+	 static final String_kind     = 1;
+	 static final Symbol_kind     = 2;
+	 static final Cons_kind       = 3;
+	 static final Nil_kind        = 4;
+	 abstract int kind();
+}
+public class Int extends sexpr { 
+    int v; 
+    Int(int v) { this.v = v;  } 
+    int kind () { return Int_kind; }
+}
+public class String extends sexpr { String(string v) { ... } ... }
+public class Symbol extends sexpr { Symbol(identifier v) { ... } ... }
+public class Cons   extends sexpr { Cons(sexpr x, sexpr y) { ... } }
+public class Nil    extends sexpr { Nil() { ... } }
+</verb></tscreen>
+
+<sect3>Sum Types as Enumerations<label id="enumerations"><p>
+Sum types which consist completely of constructors that take no arguments
+are often treated specially and translated into static constants of a
+enumerated value in languages that support them.
+<tscreen><verb>
+module Op {
+  op = PLUS | MINUS | TIMES | DIVIDE 
+}
+</verb></tscreen>
+
+Is translated into the enumeration and constants in C as
+<tscreen><verb>
+enum Op_op_ty {Op_PLUS_kind, Op_MINUS_kind, Op_TIME_kind, Op_DIVIDE_kind};
+extern Op_op_ty Op_PLUS   = Op_PLUS_kind;
+extern Op_op_ty Op_MINUS  = Op_MINUS_kind;
+extern Op_op_ty Op_TIMES  = Op_TIMES_kind;
+extern Op_op_ty Op_DIVIDE = Op_DIVIDE_kind;
+</verb></tscreen>
+
+<sect2>Field Labels<p>
+Field declarations can be as simple as a single type identifier, or they can
+be followed with an optional label. Labels aid in the readability of
+descriptions and are used by &asdlGen; to name the fields of records
+and classes for languages. For example the declarations
+<tscreen><verb>
+module Tree {
+  tree = Node(int, tree, tree)
+       | EmptyTree
+}
+</verb></tscreen>
+can also be written as
+<tscreen><verb>
+module Tree {
+  tree = Node(int value, tree left, tree right)
+       | EmptyTree
+}
+</verb></tscreen>
+
+When translating the first definition without labels 
+into C one would normally get
+<tscreen><verb>
+...
+struct Tree_tree_s {
+    union {
+    struct { int_ty int1; Tree_tree_ty tree1; Tree_tree_ty tree2; } ...
+    } v
+}
+...
+</verb></tscreen>
+with labels one would get
+<tscreen><verb>
+...
+struct Tree_tree_s {
+    union {
+    struct { int_ty value; Tree_tree_ty left; Tree_tree_ty right; } ...
+    } v
+}
+...
+</verb></tscreen>
+
+<sect2>Type Qualifiers <p> 
+
+The type identifier of a field declaration can also be qualified with either
+a sequence ("<bf/*/") or option ("<bf/?/") qualifier. The sequence qualifier
+is an abbreviation that stands for a sequence or list of that given type,
+while the option qualifier stands for a type whose value maybe
+uninitialized. Sequence types are equivalent to the lists or arrays of a
+fixed type. Option types are equivalent to the <tt/option/ and <tt/Maybe/
+types in ML and Haskell or the idiom of a pointer which maybe <tt/NULL/ or
+contain a valid address or object reference in languages like C or Java.
+&asdlGen; provides various different translation schemes for handling option
+and sequence types in languages that do not have parametric polymorphism. 
+See section <ref id="sect.invocation" name="Invocation"> for details.
+
+<sect2>Attributes<p> 
+All sum types may optionally be followed by a set of
+attributes. Attributes provide notation for fields common to all the
+constructors in the sum type. 
+<tscreen><verb>
+module M {
+  pos = (string file, int linenum, int charpos)
+  sexpr = Int(int)
+	| String(string)
+	| Symbol(identifier)
+	| Cons(sexpr, sexpr)
+	| Nil
+        attribute(pos p)
+}
+</verb></tscreen>
+adds a field of type <tt/pos/ with label <tt/p/ to all the constructors in
+<tt/sexpr/. Attribute fields are treated specially when
+translated. For example in C code the attribute field is hoisted out of the
+<tt/union/ and placed in the outer <tt/struct/. Object oriented languages
+find attribute fields declared in the abstract base class. 
+
+<sect1>View Syntax<p>
+<table loc="htp">
+<tabular ca="rcl">
+<em/lit-txt/    | = | <em/see discussion below/ @
+<em/view/       | = | "<bf/view/" <em/id/ "<bf/{/" {<em/view-entry/} "<bf/}/" @
+<em/view-entity/| = | <em/id/ "<bf/./" <em/typ-id/ @
+         | &verbar; | <em/id/ "<bf/./" <em/con-id/ @
+         | &verbar; | "<bf/module/" <em/id/ @
+<em/view-prop/| = | "<bf/&lt;=/"  <em/id/ @
+<em/view-entry/ | = | <em/view-entity/  <em/view-prop/ <em/lit-txt/ @
+         | &verbar; | "<bf/{/" {<em/view-entity/} "<bf/}/" 
+	              <em/view-prop/ <em/lit-txt/ @
+         | &verbar; | <em/view-prop/  
+                      "<bf/{/" {<em/view-entity/ <em/lit-txt/} "<bf/}/" @
+         | &verbar; | <em/view-entity/ "<bf/&lt;=/"
+                      "<bf/{/" {<em/id/ <em/lit-txt/} "<bf/}/" @
+          
+</tabular> </table>
+
+Views are an extensible system of annotating modules, types, and
+constructors to aid in the conversion of ASDL declarations into a
+particular output language. This discussion will only cover the basic view
+syntax. Section <ref id="sect.views" name="Views"> discusses the meaning of
+the annotations in more detail.
+
+<sect2>Basic Syntax<p>
+Views are named and consist of series of entries.  Each entry conceptually
+begins with a fully qualified type, constructor, or module name. Following
+that name is a key value pair. The meaning of the entry is to add a
+particular key value pair into an internal table associated with the type,
+constructor, or module. The type, constructor or module is referred to as
+the view entity the key is referred to as the view property. The value is an
+arbitrary string. In the grammar above the arbitrary string is represented
+with the <em/lit-txt/ non-terminal. <em/lit-txt/ is either a "<bf/:/"
+followed by some arbitrary text that continues to the end of the line or a
+"<bf/%%/" balanced by a "<bf/%%/" at the beginning of a line by itself. 
+Text include using the "<bf/:/" notation will have trailing and leading 
+whitespace removed. For example
+
+<tscreen><verb>
+view Doc {
+  module  M <= doc_string
+%%
+  Types for representing LISP s-expressions.
+%%
+  M.sexpr  <= doc_string : s-expressions 
+  M.Int    <= doc_string : s-expression constructor
+  M.Symbol <= doc_string : s-expression constructor
+  M.Cons   <= doc_string : s-expression constructor
+  M.Nil    <= doc_string : s-expression constructor
+}
+
+view Java {
+ M.sexpr <= source_name : Sexpr
+ M.sexpr <= base_class  : MyClass
+}
+</verb></tscreen>
+
+associates with the module M the type M.sexpr and the constructor M.Int
+strings that will be added to the automatically generated documentation
+produced by the <tt/--doc/ command of &asdlGen;. (<em/ In future we'll
+probably dump them in comments in the output code too./) The view named
+<tt/Java/ causes the type <tt/M.sexpr/ to be renamed <tt/Sexpr/ when
+generating Java output, and causes the abstract class normally generated to
+inherit from <tt/MyClass/. 
+
+There can be many views with the same name. The entries of two views
+with the same name are merged and consists of the union of the entries
+in both. It is an error, for two views of the same name to assign
+different values to the same property of an entity. <em/Currently
+this error isn't checked for so you randomly get one or the other./
+
+<sect2>Sugared Syntax<p>
+The above example show only the simplest syntax to define view entry there are
+three sugared versions that remove some of the redundancy of the simple
+syntax. The first sugared version allows the assignment of the same
+property value pair to a set of entities. The next sugared version allows
+assigning to different entities different values for a fixed property.
+The final sugared version allows the assignment of different property
+value pairs to the same entity. Examples of the sugared notation are shown
+below in their respective order.
+<tscreen><verb>
+view Doc {
+ { M.Int  M.Symbol  
+   M.Cons M.Nil } <= doc_string : s-expression constructor
+
+ <= doc_string {
+  module  M 
+%%
+  Types for representing LISP s-expressions.
+%%
+  M.sexpr : s-expressions 
+  }
+}
+
+view Java {
+ M.sexpr <= {
+   source_name : Sexpr
+   base_class  : MyClass
+ }
+}
+</verb></tscreen>

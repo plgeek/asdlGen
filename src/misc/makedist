@@ -1,0 +1,69 @@
+#!/bin/sh
+# hack to build the source dist
+CVSROOT="zephyr@ux01:/u/zephyr/cvsroot/"
+PACKAGE=asdlGen
+case "$#" in
+  1) tarball=$1
+     distname=`basename $tarball | sed -e 's/-[0-9]*.src.tar//g'`
+     ;;
+  2) VERSION=$1
+     RELEASE=$2
+     REV=-Dnow
+     ;;
+  3) VERSION=$1
+     RELEASE=$2
+     REV=-r$3 
+     ;;
+  *) echo error 
+     exit 1
+     ;;
+esac
+
+TMPDIR=/usr/tmp/
+
+if [ -z $tarball ] ; then 
+    cd ${TMPDIR}
+    distname=${PACKAGE}-${VERSION}
+    tarball=${distname}-${RELEASE}.src.tar
+    DISTDIR=${TMPDIR}/${distname}
+
+    # build the source dist first
+    rm -rf ${distname}
+    cvs  -d ${CVSROOT} export -d ${distname} ${REV} ${PACKAGE}
+    # build the documentation
+    mkdir ${DISTDIR}/doc
+    cd ${DISTDIR}/doc
+    sgml2latex -p letter -o ps -P "\usepackage{pslatex}" \
+	${DISTDIR}/src/doc/manual.sgml
+
+    mkdir ${DISTDIR}/doc/html
+    cd ${DISTDIR}/doc/html
+    sgml2html ${DISTDIR}/src/doc/manual.sgml
+
+    # build toplevel readmes etc...
+    cd ${DISTDIR}
+    for file in *.sgml ; do
+	sgml2html -s 0 ${file}
+	sgml2txt -f ${file}
+	fbase=`basename ${file} .sgml`
+	mv ${fbase}.txt $fbase
+    done
+    cd ${TMPDIR}
+    tar cf ${tarball} ${distname}
+    rm -rf ${distname}
+    exit 0
+fi
+
+echo building binary dist from $tarball
+cd ${TMPDIR}
+tar xf ${tarball}
+mv ${distname} ${distname}-build
+cd ${distname}-build
+./configure --prefix=${TMPDIR}/${distname}
+eval `src/misc/sysname`
+make clean
+make install
+cd ${TMPDIR}
+bindist=`basename ${tarball} .src.tar`.${HEAP_SUFFIX}.tar
+cp ${tarball}  ${bindist}
+tar rf ${bindist} ${distname}

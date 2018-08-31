@@ -1,0 +1,19 @@
+module Slp {
+
+-- Straight Line Programs from MC
+
+stm = Compound(stm,stm)
+    | Assign(identifier,exp) 
+    | Print(exp_list)
+
+exp_list = ExpList(exp,exp_list) | Nil
+
+exp = Id(identifier)
+    | Num(int)
+    | Op(exp,binop,exp)
+
+binop = Plus | Minus | Times | Div
+
+}
+
+

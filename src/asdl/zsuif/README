@@ -1,0 +1,48 @@
+This is a preliminary SUIF to ZSUIF translator, it builds a SUIF 2.0
+back-end pass the converts a SUIF 2.0 file into a ZSUIF pickle
+suitable for browsing. It compiles and builds under the latest SUIF
+2.0 alpha version (basesuif-2.0.0.alpha.720) and
+suifversion1support-1.0.0.alpha.60. The contents of this directory
+must be unpacked in src/asdl/zsuif of the asdlGen source
+distribution to build correctly. 
+
+It builds cleanly under Solaris 2.5.1 using the SunPro compiler. To
+get everything to link properly you need to reinstall libcii.a and
+libasdl.a compiled with position independent code. Do the following in
+the asdlGen 1.2 directory
+	
+ % cd src/c 
+ % make clean
+
+if using the native cc
+ % make CFLAGS="-KPIC" 
+or if using gcc
+ % make CFLAGS="-fPIC" 
+
+ % make install
+
+After this you need to set up the SUIF 2.0 environment variables
+correctly and set ASDL_HOME to the base install directory of
+asdlGen. Then
+
+ % cd src/asdl/zsuif
+ % make install
+
+should install the SUIF 2.0 pass do_zsuif_gateway in the appropriate place.
+
+To build the ZSUIF->VPO code run the build.sh script in this
+directory. You must have Standard ML of New Jersey version 110.0.3
+installed for this to build. It should produce a SML heap file called
+zsuif2vpo.
+
+Once you've created a SUIF2.0 file you can convert it into a ZSUIF
+file by invoking do_zsuif_gateway
+   % do_zsuif_gateway {infile} {outfile}.zsuif
+
+To convert the ZSUIF file into vpo code you should do the following.
+
+   % sml @SMLload=zsuif2vpo foo.zsuif 
+
+N.B. The file must end with a ".zsuif" it should produce a ".dec" file.
+
+ 

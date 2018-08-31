@@ -1,0 +1,49 @@
+digraph G {
+graph [size="6,8",ratio="fill"];
+node [fontname = "Helvetica",fontsize="14"];
+
+node [shape = "diamond"];
+ mk_spec [label="functor\nmkAlgebraicSpec"];
+ mk_semant_trans [label="functor\nmkAlgebraicSemantTranslator"];
+ mk_trans [label="functor\nmkTranslateFromTranslator"];
+ mk_src [label="functor\nmkSourceFileOutput"];
+
+node [shape = "box"];
+ ty_struct [label="structure AlgebraicTy"];
+ ast_struct [label="structure AlgebraicAst"];
+ mlpp_struct [label="structure MLPP"];
+node [fontname = "Courier", shape = "plaintext" ]; 
+ ast_sig [label="signature ALGEBRAIC_AST"];
+ semant_trans_sig [label="signature SEMANT_TRANSLATOR"];
+ spec_sig [label="signature ALGEBRAIC_SPEC"];
+ ty_decl_sig [label="signature ALGEBRAIC_TYPE_DECL"];
+ trans_sig [label="signature TRANSLATE"];
+ code_pp_sig [label="signature CODE_PP"];
+ algebraic_pp_sig [label="signature ALGEBRAIC_PP"];
+/* algebraic_spec_args 
+[label="sig\l val get_attribs : bool\l val streams_ty : {outs:string,ins:string} option\l val monad_name : string option\lend\l"]
+*/
+edge [style = "bold"]
+/*algebraic_spec_args -> mk_spec*/
+
+mlpp_struct -> algebraic_pp_sig
+ast_struct -> ast_sig
+ast_sig -> ty_struct 
+ast_sig -> mlpp_struct
+
+algebraic_pp_sig -> code_pp_sig
+ty_struct -> ty_decl_sig
+-> mk_spec 
+-> spec_sig
+-> mk_semant_trans
+-> semant_trans_sig
+
+semant_trans_sig -> mk_trans
+trans_sig -> mk_trans
+mk_src -> trans_sig
+
+code_pp_sig -> mk_src
+
+}
+
+

@@ -1,0 +1,90 @@
+(* @configure_input@ *)
+structure ConfigBuildParams =
+  struct
+	
+    structure B = MetaBuild
+    val run_cm  =
+      B.mkVAR{name=SOME "SML_CM",
+	      doc=["SML with compilation manager"],
+	      init=B.STR "@SML_CM@"}
+    val run_heap  =
+      B.mkVAR{name=SOME "RUN_SML_HEAP",
+	      doc=["Run ML heap"],
+	      init=B.STR "@SML_CM@"}
+    (* this is unreliable *)
+    val os = String.map Char.toLower (SMLofNJ.SysInfo.getOSName ())
+    val heap_suffix = (Compiler.architecture)^"-"^os
+    fun heap_arg x = "@SMLload="^x
+    val comp  =
+      B.mkVAR{name=SOME "CC",
+	      doc=["C compiler"],
+	      init=B.STR "@CC@"}
+    val comp_cxx  =
+      B.mkVAR{name=SOME "CXX",
+	      doc=["C++ compiler"],
+	      init=B.STR "@CXX@"}
+
+    val link  =
+      B.mkVAR{name=SOME "LD",
+	      doc=["Config C linker"],
+	      init=B.STR "@LINKER@"}
+
+    val mklib =
+      B.mkVAR{name=SOME "MKLIB",
+	      doc=["Config Library Archiver"],
+	      init=B.STR "@MKLIB@"}
+
+    val comp_args = [B.STR "-c "]
+    val link_args = []
+    val mklib_args = [B.STR "crs"]
+
+    fun debugFlag true  = B.STR "-g"
+      | debugFlag false = B.STR ""
+
+    fun optFlag x = B.STR ("-O"^(Int.toString x))
+    fun incFlag x = B.STR ("-I"^x)
+    fun libFlag x = B.STR ("-L"^x)
+    fun defFlag (x,NONE) = B.STR ("-D"^x)
+      | defFlag (x,SOME y) = B.STR ("-D"^x^"="^y)
+
+    fun linkOutFlag x = B.STR ("-o "^x)
+    fun compOutFlag x = B.STR ("-o "^x)
+    fun mklibOutFlag x = B.STR (x)
+
+    val lib_suffix = SOME "a"
+    val obj_suffix = SOME "o"
+    val exe_suffix = NONE
+
+    val copy =
+      B.mkVAR{name=SOME "COPY",
+	      doc=["Config copy command"],
+	      init=B.STR "cp"}
+    val delete =
+      B.mkVAR{name=SOME "DELETE",
+	      doc=["Config delete command"],
+	      init=B.STR "rm"}
+    val delete_force_arg = "-f"
+    val mkDir =
+      B.mkVAR{name=SOME "MKDIR",
+	      doc=["Config make directory"],
+	      init=B.STR "mkdir"}
+    val existsDir =
+      B.mkVAR{name=SOME "TESTDIR",
+	      doc=["Config test directory exists"],
+	      init=B.STR "test -d"}
+    val attrb_set =
+      B.mkVAR{name=SOME "SETATTRB",
+	      doc=["Config set file attributes"],
+	      init=B.STR "chmod"}
+    fun attrbs2str {r,w,x} =
+      let
+	fun cif (true,x,xs) = x^xs
+	  | cif (false,x,xs) = xs
+      in "a="^cif(r,"r",cif(w,"w",cif(x,"x","")))
+      end
+
+  end
+structure ConfigSML = SMLBuild(structure Params = ConfigBuildParams)
+structure ConfigCC = CCBuild(structure Params = ConfigBuildParams)
+structure ConfigFileOps = FileOpsBuild(structure Params = ConfigBuildParams)
+(*EOF*)
